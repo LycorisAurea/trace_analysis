@@ -23,6 +23,7 @@ def cal_entropy(container):
     return entropy
 
 
+
 # read parameter
 try:
     input_pcap = sys.argv[1]
@@ -108,12 +109,21 @@ entropy_sport.append(cal_entropy(sport))
 entropy_dport.append(cal_entropy(dport))        
 
 
+
+# make a dir collect output data
+dir_name = 'Analysis_{0}s_{1}'.format(time_interval, input_pcap.split('/')[-1].split('.')[:-1][0])
+os.system('mkdir {0}'.format(dir_name))
+
+
+
 # Create the graph
 time_axis = [i+1 for i in range(len(entropy_dst_ip))]
 date_time_axis = [
     datetime.datetime.fromtimestamp(first_time+i*time_interval).strftime("%H:%M:%S") for i in time_axis
 ]
 
+chart_file_name = './{0}/Analysis_{1}s_{2}.html'.format(dir_name, time_interval, 
+    input_pcap.split('/')[-1].split('.')[:-1][0])
 plotly.offline.plot(
     {
         "data":
@@ -127,9 +137,11 @@ plotly.offline.plot(
             plotly.graph_objs.Layout(title='Entropy of Trace: {0}'.format(input_pcap.split('/')[-1]),
                 xaxis=dict(title='Time'), yaxis=dict(title='Entropy', range=[0,1]))
     }, 
-    filename='Analysis_{0}.html'.format(input_pcap.split('/')[-1].split('.')[:-1][0]), 
+    filename=chart_file_name, 
     auto_open=False
 )
+
+
 
 # output csv
 csv_title = ['time', 'Src IP', 'Dst IP', 'Src Ports', 'Dst Ports']
@@ -137,7 +149,8 @@ csv_time_axis = [ (i+1)*time_interval for i in range(len(entropy_src_ip)) ]
 csv_items = [csv_time_axis, entropy_src_ip, entropy_dst_ip, entropy_sport, entropy_dport]
 csv_items = list( zip(*csv_items) )
 
-csv_output_file_name = 'Analysis_{0}.csv'.format(input_pcap.split('/')[-1].split('.')[:-1][0])
+csv_output_file_name = './{0}/Analysis_{1}s_{2}.csv'.format(dir_name, time_interval, 
+    input_pcap.split('/')[-1].split('.')[:-1][0])
 with open(csv_output_file_name, 'w', encoding='utf-8') as fout:
     writer = csv.writer(fout, delimiter=',')
     
