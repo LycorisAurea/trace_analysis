@@ -172,6 +172,7 @@ fig.add_trace(
 fig.update_xaxes(title_text='Time', row=1, col=1)
 fig.update_xaxes(title_text='Time', row=2, col=1)
 fig.update_xaxes(title_text='Time', row=2, col=2)
+fig.update_xaxes(title_text='Time', row=3, col=1)
 fig.update_xaxes(title_text='Time', row=3, col=2)
 
 fig.update_yaxes(title_text='Entropy', range=[0,1], row=1, col=1)
