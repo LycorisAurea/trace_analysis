@@ -124,6 +124,70 @@ date_time_axis = [
 
 chart_file_name = './{0}/Analysis_{1}s_{2}.html'.format(dir_name, time_interval, 
     input_pcap.split('/')[-1].split('.')[:-1][0])
+
+fig = plotly.subplots.make_subplots(
+    rows=3, cols=2, 
+    specs=[
+        [{'colspan': 2}, None], [{}, {}], [{}, {}]
+    ], 
+    subplot_titles=('Total', 'Source IP', 'Distination IP', 'Source Ports', 'Distination Ports'),
+)
+# first chart
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_src_ip, 
+        name='Source IP', marker={'color':'blue'}), row=1, col=1
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_dst_ip, 
+        name='Distination IP', marker={'color':'red'}), row=1, col=1
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_sport, 
+        name='Source Ports', marker={'color':'#00CC96'}), row=1, col=1
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_dport, 
+        name='Distination Ports', marker={'color':'#AB63FA'}), row=1, col=1
+)
+
+# 2, 3, 4, 5 chart
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_src_ip, 
+        name='Source IP', marker={'color':'blue'}), row=2, col=1
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_dst_ip, 
+        name='Distination IP', marker={'color':'red'}), row=2, col=2
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_sport, 
+        name='Source Ports', marker={'color':'#00CC96'}), row=3, col=1
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_dport, 
+        name='Distination Ports', marker={'color':'#AB63FA'}), row=3, col=2
+)
+
+# axis
+fig.update_xaxes(title_text='Time', row=1, col=1)
+fig.update_xaxes(title_text='Time', row=2, col=1)
+fig.update_xaxes(title_text='Time', row=2, col=2)
+fig.update_xaxes(title_text='Time', row=3, col=2)
+
+fig.update_yaxes(title_text='Entropy', range=[0,1], row=1, col=1)
+fig.update_yaxes(title_text='Entropy', row=2, col=1)
+fig.update_yaxes(title_text='Entropy', row=2, col=2)
+fig.update_yaxes(title_text='Entropy', row=3, col=1)
+fig.update_yaxes(title_text='Entropy', row=3, col=2)
+
+# output
+fig.update_layout(title='Entropy of Trace: {0}'.format(input_pcap.split('/')[-1]))
+#fig.show()
+plotly.offline.plot(fig, filename=chart_file_name, auto_open=False)
+
+
+"""
+# one figure version
 plotly.offline.plot(
     {
         "data":
@@ -140,7 +204,7 @@ plotly.offline.plot(
     filename=chart_file_name, 
     auto_open=False
 )
-
+"""
 
 
 # output csv
