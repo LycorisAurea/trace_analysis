@@ -14,8 +14,8 @@ pip3 install plotly
 
 ## How To Use
 
-* **_analysis.py_**:
+* **_analysis.py_** :
 
 ```bash
-python3 analysis.py <trace file> <time interval>
+python3 analysis.py *<trace file>* *<time interval>*
 ```
