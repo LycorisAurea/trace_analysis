@@ -44,35 +44,44 @@ elif time_interval < 1:
 first_time = None
 current_interval = time_interval
 
+packet_count = 0
+
+list_packet_count = []
 entropy_src_ip = []
 entropy_dst_ip = []
 entropy_sport = []
 entropy_dport = []
+entropy_packet_length = []
 
 src_ip = Counter()
 dst_ip = Counter()
 sport = Counter()
 dport = Counter()
+packet_length = Counter()
 
 with open(input_pcap, 'rb') as f:
     trace = dpkt.pcap.Reader(f)
     
-    for ts, buf in trace:         
+    for ts, buf in trace:        
         # get the first timestamp
         if first_time == None: first_time = ts
         
         # cal entropy result
         if ts > (first_time+current_interval):
+            list_packet_count.append(packet_count)
             entropy_src_ip.append(cal_entropy(src_ip))
             entropy_dst_ip.append(cal_entropy(dst_ip))
             entropy_sport.append(cal_entropy(sport))
             entropy_dport.append(cal_entropy(dport))
+            entropy_packet_length.append(cal_entropy(packet_length))
 
             # clear
+            packet_count = 0
             src_ip.clear()
             dst_ip.clear()
             sport.clear()
             dport.clear()
+            packet_length.clear()
 
             # add current_interval
             current_interval += time_interval
@@ -83,9 +92,13 @@ with open(input_pcap, 'rb') as f:
         except AttributeError: pass
         except dpkt.dpkt.NeedData: pass
         
+        ## packet count
         if eth.type != dpkt.ethernet.ETH_TYPE_IP: continue
+        else: 
+            packet_count += 1
+            packet_length[ len(buf) ] += 1
+        
         ip = eth.data
-
         src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
         dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
         
@@ -103,10 +116,12 @@ with open(input_pcap, 'rb') as f:
             except AttributeError: pass
         
 # last time
+list_packet_count.append(packet_count)
 entropy_src_ip.append(cal_entropy(src_ip))
 entropy_dst_ip.append(cal_entropy(dst_ip))
 entropy_sport.append(cal_entropy(sport))
-entropy_dport.append(cal_entropy(dport))        
+entropy_dport.append(cal_entropy(dport))
+entropy_packet_length.append(cal_entropy(packet_length))        
 
 
 
@@ -118,6 +133,7 @@ os.system('mkdir {0}'.format(dir_name))
 
 # Create the graph
 time_axis = [i+1 for i in range(len(entropy_dst_ip))]
+#date_time_axis = [ i*time_interval//60 for i in time_axis]
 date_time_axis = [
     datetime.datetime.fromtimestamp(first_time+i*time_interval).strftime("%H:%M:%S") for i in time_axis
 ]
@@ -126,11 +142,12 @@ chart_file_name = './{0}/Analysis_{1}s_{2}.html'.format(dir_name, time_interval,
     input_pcap.split('/')[-1].split('.')[:-1][0])
 
 fig = plotly.subplots.make_subplots(
-    rows=3, cols=2, 
+    rows=4, cols=2, 
     specs=[
-        [{'colspan': 2}, None], [{}, {}], [{}, {}]
+        [{'colspan': 2}, None], [{}, {}], [{}, {}], [{}, {}]
     ], 
-    subplot_titles=('Total', 'Source IP', 'Distination IP', 'Source Ports', 'Distination Ports'),
+    subplot_titles=('Total', 'Source IP', 'Distination IP', 'Source Ports', 
+        'Distination Ports', 'Packet Count', 'Packet Length'),
 )
 # first chart
 fig.add_trace(
@@ -168,18 +185,33 @@ fig.add_trace(
         name='Distination Ports', marker={'color':'#AB63FA'}), row=3, col=2
 )
 
+# 6, 7 chart
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=list_packet_count, 
+        name='Packet Count', marker={'color':'orange'}), row=4, col=1
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_packet_length, 
+        name='Packet Length', marker={'color':'pink'}), row=4, col=2
+)
+
+
 # axis
 fig.update_xaxes(title_text='Time', row=1, col=1)
 fig.update_xaxes(title_text='Time', row=2, col=1)
 fig.update_xaxes(title_text='Time', row=2, col=2)
 fig.update_xaxes(title_text='Time', row=3, col=1)
 fig.update_xaxes(title_text='Time', row=3, col=2)
+fig.update_xaxes(title_text='Time', row=4, col=1)
+fig.update_xaxes(title_text='Time', row=4, col=2)
 
 fig.update_yaxes(title_text='Entropy', range=[0,1], row=1, col=1)
 fig.update_yaxes(title_text='Entropy', row=2, col=1)
 fig.update_yaxes(title_text='Entropy', row=2, col=2)
 fig.update_yaxes(title_text='Entropy', row=3, col=1)
 fig.update_yaxes(title_text='Entropy', row=3, col=2)
+fig.update_yaxes(title_text='Number', row=4, col=1)
+fig.update_yaxes(title_text='Entropy', row=4, col=2)
 
 # output
 fig.update_layout(title='Entropy of Trace: {0}'.format(input_pcap.split('/')[-1]))
