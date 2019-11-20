@@ -52,12 +52,14 @@ entropy_dst_ip = []
 entropy_sport = []
 entropy_dport = []
 entropy_packet_length = []
+entropy_proto = []
 
 src_ip = Counter()
 dst_ip = Counter()
 sport = Counter()
 dport = Counter()
 packet_length = Counter()
+proto = Counter()
 
 with open(input_pcap, 'rb') as f:
     trace = dpkt.pcap.Reader(f)
@@ -74,6 +76,7 @@ with open(input_pcap, 'rb') as f:
             entropy_sport.append(cal_entropy(sport))
             entropy_dport.append(cal_entropy(dport))
             entropy_packet_length.append(cal_entropy(packet_length))
+            entropy_proto.append(cal_entropy(proto))
 
             # clear
             packet_count = 0
@@ -82,6 +85,7 @@ with open(input_pcap, 'rb') as f:
             sport.clear()
             dport.clear()
             packet_length.clear()
+            proto.clear()
 
             # add current_interval
             current_interval += time_interval
@@ -101,6 +105,7 @@ with open(input_pcap, 'rb') as f:
         ip = eth.data
         src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
         dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
+        proto[ ip.p ] += 1
         
         if ip.p == dpkt.ip.IP_PROTO_TCP:
             try:
@@ -142,12 +147,12 @@ chart_file_name = './{0}/Analysis_{1}s_{2}.html'.format(dir_name, time_interval,
     input_pcap.split('/')[-1].split('.')[:-1][0])
 
 fig = plotly.subplots.make_subplots(
-    rows=4, cols=2, 
+    rows=5, cols=2, 
     specs=[
-        [{'colspan': 2}, None], [{}, {}], [{}, {}], [{}, {}]
+        [{'colspan': 2}, None], [{}, {}], [{}, {}], [{}, {}], [{}, {}]
     ], 
     subplot_titles=('Total', 'Source IP', 'Distination IP', 'Source Ports', 
-        'Distination Ports', 'Packet Count', 'Packet Length'),
+        'Distination Ports', 'Packet Count', 'Packet Length', 'Protocol'),
 )
 # first chart
 fig.add_trace(
@@ -185,7 +190,7 @@ fig.add_trace(
         name='Distination Ports', marker={'color':'#AB63FA'}), row=3, col=2
 )
 
-# 6, 7 chart
+# 6, 7, 8 chart
 fig.add_trace(
     plotly.graph_objs.Scatter(x=date_time_axis, y=list_packet_count, 
         name='Packet Count', marker={'color':'orange'}), row=4, col=1
@@ -193,6 +198,10 @@ fig.add_trace(
 fig.add_trace(
     plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_packet_length, 
         name='Packet Length', marker={'color':'pink'}), row=4, col=2
+)
+fig.add_trace(
+    plotly.graph_objs.Scatter(x=date_time_axis, y=entropy_proto, 
+        name='Protocol', marker={'color':'#CCCC00'}), row=5, col=1
 )
 
 
@@ -204,6 +213,7 @@ fig.update_xaxes(title_text='Time', row=3, col=1)
 fig.update_xaxes(title_text='Time', row=3, col=2)
 fig.update_xaxes(title_text='Time', row=4, col=1)
 fig.update_xaxes(title_text='Time', row=4, col=2)
+fig.update_xaxes(title_text='Time', row=5, col=1)
 
 fig.update_yaxes(title_text='Entropy', range=[0,1], row=1, col=1)
 fig.update_yaxes(title_text='Entropy', row=2, col=1)
@@ -212,6 +222,7 @@ fig.update_yaxes(title_text='Entropy', row=3, col=1)
 fig.update_yaxes(title_text='Entropy', row=3, col=2)
 fig.update_yaxes(title_text='Number', row=4, col=1)
 fig.update_yaxes(title_text='Entropy', row=4, col=2)
+fig.update_yaxes(title_text='Entropy', row=5, col=1)
 
 # output
 fig.update_layout(title='Entropy of Trace: {0}'.format(input_pcap.split('/')[-1]))

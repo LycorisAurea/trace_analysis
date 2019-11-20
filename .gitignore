@@ -3,5 +3,4 @@
 *.csv
 
 # test file
-test_sniff.py
-test_tutorial1.py
+test_*.py
