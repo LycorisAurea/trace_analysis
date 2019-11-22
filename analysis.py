@@ -252,9 +252,11 @@ plotly.offline.plot(
 
 
 # output csv
-csv_title = ['time', 'Src IP', 'Dst IP', 'Src Ports', 'Dst Ports']
+csv_title = ['time', 'Src IP', 'Dst IP', 'Src Ports', 'Dst Ports', 
+                'Packet Count', 'Packet Length', 'Protocol']
 csv_time_axis = [ (i+1)*time_interval for i in range(len(entropy_src_ip)) ]
-csv_items = [csv_time_axis, entropy_src_ip, entropy_dst_ip, entropy_sport, entropy_dport]
+csv_items = [csv_time_axis, entropy_src_ip, entropy_dst_ip, entropy_sport, entropy_dport, 
+                list_packet_count, entropy_packet_length, entropy_proto]
 csv_items = list( zip(*csv_items) )
 
 csv_output_file_name = './{0}/Analysis_{1}s_{2}.csv'.format(dir_name, time_interval, 
