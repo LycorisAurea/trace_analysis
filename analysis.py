@@ -222,6 +222,18 @@ class TracePlot(PacketAnalysis):
     def __is_attack_list(self):
         if self.attack_data == None: return False
         else: return True
+    def __item_fullname(self, item):
+        full_item = []
+        for i in item:
+            if i == 'src_ip': full_item.append('Source IP')
+            elif i == 'dst_ip': full_item.append('Distination IP')
+            elif i == 'sport': full_item.append('Source Port')
+            elif i == 'dport': full_item.append('Distination Port')
+            elif i == 'pkt_cnt': full_item.append('Packet Count')
+            elif i == 'pkt_len': full_item.append('Paclet Length')
+            elif i == 'proto': full_item.append('Protocol')
+        return full_item
+
 
     def import_attack_list(self, file):     
         list_attacks = []
@@ -297,7 +309,7 @@ class TracePlot(PacketAnalysis):
         fig = plotly.subplots.make_subplots(
             rows=num_chart, cols=1, 
             specs=[ [{}] for i in range(num_chart) ],  
-            subplot_titles=item,
+            subplot_titles=self.__item_fullname(item)
         )
 
         list_data = [ self.data[i] for i in item ]
@@ -305,10 +317,11 @@ class TracePlot(PacketAnalysis):
             fig.add_trace( self.data['odd_sep'], row=1, col=1 )
             fig.add_trace( self.data['even_sep'], row=1, col=1 )
         
-        for i in range(len(item)):
+        for i in range(num_chart):
             fig.add_trace( list_data[i], row=i+1, col=1 )
             if item[i] == 'pkt_cnt': fig.update_yaxes(title_text='Count', row=i+1, col=1)
-            else: fig.update_yaxes(title_text='Entropy', row=i+1, col=1)
+            else: fig.update_yaxes(title_text='Entropy', range=[0,1], row=i+1, col=1)
+        fig.update_xaxes(title='Time'+' ({0})'.format(self.mode), row=num_chart, col=1)
         
         # output
         fig.update_layout(title='Entropy of Trace: {0}'.format(self.name_input_pcap))
