@@ -250,7 +250,8 @@ class TracePlot(PacketAnalysis):
     ## one trace file
     def one_analysis(self, input_pcap):
         # pcap parameter
-        self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
+        try: self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
+        except IndexError: self.name_input_pcap = input_pcap.split('/')[-1]
         self.dir_name = 'Analysis_{0}s_{1}'.format(self.time_interval, self.name_input_pcap)
 
         # mkdir
@@ -263,7 +264,8 @@ class TracePlot(PacketAnalysis):
     ## several trace file
     def first_sep_analysis(self, input_pcap):
         # pcap parameter
-        self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
+        try: self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
+        except IndexError: self.name_input_pcap = input_pcap.split('/')[-1]
         self.dir_name = 'Analysis_{0}s_{1}'.format(self.time_interval, self.name_input_pcap)
 
         # mkdir
