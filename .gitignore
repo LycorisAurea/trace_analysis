@@ -4,3 +4,6 @@
 
 # test file
 test_*.py
+
+# pycache
+__pycache__

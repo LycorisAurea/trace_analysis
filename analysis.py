@@ -12,7 +12,17 @@ class PacketAnalysis():
     def __init__(self):
         # time parameter
         self.first_time = None
+        self.current_interval = None
         
+        # counter parameter
+        self.packet_count = 0
+        self.src_ip = Counter()
+        self.dst_ip = Counter()
+        self.sport = Counter()
+        self.dport = Counter()
+        self.packet_length = Counter()
+        self.proto = Counter()
+
         # collect entropy serires
         self.list_packet_count = []
         self.entropy_src_ip = []
@@ -36,47 +46,42 @@ class PacketAnalysis():
 
         return entropy
 
-    def trace_analysis(self, file, time_interval):
-        # time parameter
-        current_interval = time_interval
+    def trace_analysis(self, file, time_interval, mode):
+        # mode = 'one_trace', 'first', 'mid', 'last'
 
-        # counter parameter
-        packet_count = 0
-        src_ip = Counter()
-        dst_ip = Counter()
-        sport = Counter()
-        dport = Counter()
-        packet_length = Counter()
-        proto = Counter()
+        # time parameter
+        if mode == 'one_trace' or mode == 'first':
+            self.current_interval = time_interval
         
         # get entropy
         with open(file, 'rb') as f:
             trace = dpkt.pcap.Reader(f)
             for ts, buf in trace:        
                 # get the first timestamp
-                if self.first_time == None: self.first_time = ts
+                if mode == 'one_trace' or mode == 'first':
+                    if self.first_time == None: self.first_time = ts
                 
                 # cal entropy result
-                if ts > (self.first_time+current_interval):
-                    self.list_packet_count.append(packet_count)
-                    self.entropy_src_ip.append(self.__cal_entropy_exact(src_ip))
-                    self.entropy_dst_ip.append(self.__cal_entropy_exact(dst_ip))
-                    self.entropy_sport.append(self.__cal_entropy_exact(sport))
-                    self.entropy_dport.append(self.__cal_entropy_exact(dport))
-                    self.entropy_packet_length.append(self.__cal_entropy_exact(packet_length))
-                    self.entropy_proto.append(self.__cal_entropy_exact(proto))
+                if ts > (self.first_time+self.current_interval):
+                    self.list_packet_count.append(self.packet_count)
+                    self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
+                    self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
+                    self.entropy_sport.append(self.__cal_entropy_exact(self.sport))
+                    self.entropy_dport.append(self.__cal_entropy_exact(self.dport))
+                    self.entropy_packet_length.append(self.__cal_entropy_exact(self.packet_length))
+                    self.entropy_proto.append(self.__cal_entropy_exact(self.proto))
 
                     # clear
-                    packet_count = 0
-                    src_ip.clear()
-                    dst_ip.clear()
-                    sport.clear()
-                    dport.clear()
-                    packet_length.clear()
-                    proto.clear()
+                    self.packet_count = 0
+                    self.src_ip.clear()
+                    self.dst_ip.clear()
+                    self.sport.clear()
+                    self.dport.clear()
+                    self.packet_length.clear()
+                    self.proto.clear()
 
                     # add current_interval
-                    current_interval += time_interval
+                    self.current_interval += time_interval
                 
                 # get items
                 try: eth = dpkt.ethernet.Ethernet(buf)
@@ -86,35 +91,36 @@ class PacketAnalysis():
                 ## packet count
                 if eth.type != dpkt.ethernet.ETH_TYPE_IP: continue
                 else: 
-                    packet_count += 1
-                    packet_length[ len(buf) ] += 1
+                    self.packet_count += 1
+                    self.packet_length[ len(buf) ] += 1
                 
                 ip = eth.data
-                src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
-                dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
-                proto[ ip.p ] += 1
+                self.src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
+                self.dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
+                self.proto[ ip.p ] += 1
                 
                 if ip.p == dpkt.ip.IP_PROTO_TCP:
                     try:
                         tcp = ip.data
-                        sport[tcp.sport] += 1
-                        dport[tcp.dport] += 1  
+                        self.sport[tcp.sport] += 1
+                        self.dport[tcp.dport] += 1  
                     except AttributeError: pass
                 elif ip.p == dpkt.ip.IP_PROTO_UDP:
                     try:
                         udp = ip.data
-                        sport[udp.sport] += 1
-                        dport[udp.dport] += 1
+                        self.sport[udp.sport] += 1
+                        self.dport[udp.dport] += 1
                     except AttributeError: pass
             
         # end, put remaining data into list
-        self.list_packet_count.append(packet_count)
-        self.entropy_src_ip.append(self.__cal_entropy_exact(src_ip))
-        self.entropy_dst_ip.append(self.__cal_entropy_exact(dst_ip))
-        self.entropy_sport.append(self.__cal_entropy_exact(sport))
-        self.entropy_dport.append(self.__cal_entropy_exact(dport))
-        self.entropy_packet_length.append(self.__cal_entropy_exact(packet_length))
-        self.entropy_proto.append(self.__cal_entropy_exact(proto))
+        if mode == 'one_trace' or mode == 'last':
+            self.list_packet_count.append(self.packet_count)
+            self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
+            self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
+            self.entropy_sport.append(self.__cal_entropy_exact(self.sport))
+            self.entropy_dport.append(self.__cal_entropy_exact(self.dport))
+            self.entropy_packet_length.append(self.__cal_entropy_exact(self.packet_length))
+            self.entropy_proto.append(self.__cal_entropy_exact(self.proto))
 
     # get interface
     def get_first_pkt_time(self):
@@ -134,7 +140,20 @@ class PacketAnalysis():
     def get_pkt_cnt(self):
         return self.list_packet_count
     def clear(self):
+        # time parameter
         self.first_time = None
+        self.current_interval = None
+        
+        # counter parameter
+        self.packet_count = 0
+        self.src_ip.clear()
+        self.dst_ip.clear()
+        self.sport.clear()
+        self.dport.clear()
+        self.packet_length.clear()
+        self.proto.clear()
+
+        # collect entropy serires
         self.list_packet_count = []
         self.entropy_src_ip = []
         self.entropy_dst_ip = []
@@ -227,6 +246,8 @@ class TracePlot(PacketAnalysis):
             elif i == 'proto': full_item.append('Protocol')
         return full_item
 
+    # analysis
+    ## one trace file
     def one_analysis(self, input_pcap):
         # pcap parameter
         self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
@@ -236,8 +257,27 @@ class TracePlot(PacketAnalysis):
         self.__mkdir()
 
         # analysis trace
-        self.trace_analysis(input_pcap, self.time_interval)  
+        self.trace_analysis(input_pcap, self.time_interval, 'one_trace')  
         self.__data_update()
+    
+    ## several trace file
+    def first_sep_analysis(self, input_pcap):
+        # pcap parameter
+        self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
+        self.dir_name = 'Analysis_{0}s_{1}'.format(self.time_interval, self.name_input_pcap)
+
+        # mkdir
+        self.__mkdir()
+
+        # analysis trace
+        self.trace_analysis(input_pcap, self.time_interval, 'first')
+    def mid_sep_analysis(self, input_pcap):
+        self.trace_analysis(input_pcap, self.time_interval, 'mid')
+    def last_sep_analysis(self, input_pcap):
+        self.trace_analysis(input_pcap, self.time_interval, 'last')
+        self.__data_update()
+
+    # add attack list
     def import_attack_list(self, file):     
         list_attacks = []
         with open(file, 'r') as fin:
@@ -272,6 +312,8 @@ class TracePlot(PacketAnalysis):
                     region_even[num] = 1
         self.attack_data =  dict(csv=csv_mark, axis=region_attacks, odd=region_odd, even=region_even)
         self.__data_update()
+    
+    # output plot, csv
     def one_plot(self, item):
         chart_file_name = './{0}/one_Analysis_{1}s_{2}.html'.format(
             self.dir_name, self.time_interval, self.name_input_pcap)
