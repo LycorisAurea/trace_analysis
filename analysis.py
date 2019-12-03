@@ -303,12 +303,12 @@ class TracePlot(PacketAnalysis):
             mid = (isend-isfrom)//2 + isfrom
             region_attacks[mid] = attack_name+'({0})'.format(str(mid))
             if cnt%2:
-                for num in range(isfrom, isend+1):
+                for num in range(isfrom-1, isend):
                     csv_mark[num] = attack_name
                     region_attacks[num] = attack_name+'({0})'.format(str(num))
                     region_odd[num] = 1
             else:
-                for num in range(isfrom, isend+1):
+                for num in range(isfrom-1, isend):
                     csv_mark[num] = attack_name
                     region_attacks[num] = attack_name+'({0})'.format(str(num))
                     region_even[num] = 1
