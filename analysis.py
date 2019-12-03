@@ -144,25 +144,18 @@ class PacketAnalysis():
         self.entropy_proto = []
 
 class TracePlot(PacketAnalysis):
-    def __init__(self, input_pcap, time_interval, mode='sec'):
+    def __init__(self, time_interval, mode='sec'):
         super(TracePlot, self).__init__()
-        
+
         # pcap parameter
         self.time_interval = time_interval
-        self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
-        self.dir_name = 'Analysis_{0}s_{1}'.format(self.time_interval, self.name_input_pcap)
+        self.name_input_pcap = None
+        self.dir_name = None
 
         # graph parameter
         self.mode = mode
         self.data = None
         self.attack_data = None
-
-        # mkdir
-        self.__mkdir()
-
-        # analysis trace
-        self.trace_analysis(input_pcap, self.time_interval)  
-        self.__data_update()
     def __mkdir(self):
         os.system('mkdir {0}'.format(self.dir_name))
     def __time_axis(self):
@@ -234,7 +227,17 @@ class TracePlot(PacketAnalysis):
             elif i == 'proto': full_item.append('Protocol')
         return full_item
 
+    def one_analysis(self, input_pcap):
+        # pcap parameter
+        self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
+        self.dir_name = 'Analysis_{0}s_{1}'.format(self.time_interval, self.name_input_pcap)
 
+        # mkdir
+        self.__mkdir()
+
+        # analysis trace
+        self.trace_analysis(input_pcap, self.time_interval)  
+        self.__data_update()
     def import_attack_list(self, file):     
         list_attacks = []
         with open(file, 'r') as fin:
@@ -371,7 +374,8 @@ if __name__ == '__main__':
         exit(0)
 
     # analysis and plot
-    myplot = TracePlot(input_pcap, time_interval, mode)
+    myplot = TracePlot(time_interval, mode)
+    myplot.one_analysis(input_pcap)
     if attack_list != 'none': myplot.import_attack_list(attack_list)
     myplot.one_plot(['src_ip', 'dst_ip', 'sport', 'dport', 'pkt_cnt', 'pkt_len', 'proto'])
     myplot.seperate_plot(['src_ip', 'dst_ip', 'sport', 'dport', 'pkt_cnt', 'pkt_len', 'proto'])
