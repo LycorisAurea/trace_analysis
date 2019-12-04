@@ -38,6 +38,11 @@ class PacketAnalysis():
         for item, cnt in container.most_common():
             entropy += ( cnt * math.log(cnt) )
             total_items_cnt += cnt
+        
+        # whether container is empty, to avoid trace chasm
+        if total_items_cnt == 0 or total_items_cnt == 1: return None
+
+        # calculate entropy
         entropy -= ( total_items_cnt * math.log(total_items_cnt) )
         entropy = -entropy / total_items_cnt
 
@@ -62,7 +67,7 @@ class PacketAnalysis():
                     if self.first_time == None: self.first_time = ts
                 
                 # cal entropy result
-                if ts > (self.first_time+self.current_interval):
+                while ts > (self.first_time+self.current_interval):
                     self.list_packet_count.append(self.packet_count)
                     self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
                     self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
