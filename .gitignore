@@ -7,3 +7,6 @@ test_*.py
 
 # pycache
 __pycache__
+
+# vscode
+.vscode
