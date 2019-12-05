@@ -19,3 +19,5 @@ pip3 install plotly
 ```bash
 python3 analysis.py <trace file>  <attack list(or 'none')> <mode:sec/min/hour/real> <time interval(sec)>
 ```
+
+![Chart](https://github.com/LycorisAurea/trace_analysis/show/sep_Analysis_60s_AppDDos.html)
