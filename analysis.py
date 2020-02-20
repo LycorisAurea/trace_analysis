@@ -306,15 +306,15 @@ class TracePlot(PacketAnalysis):
                     list_attacks.append(info)
                 else: continue
         csv_mark = ['' for i in range(len(self.get_entropy_dst_ip()))]
-        region_attacks = [str(i)+'m' for i in range(len(self.get_entropy_dst_ip()))]
+        region_attacks = [str(i)+'s' for i in range(len(self.get_entropy_dst_ip()))]
         region_odd = [0 for i in range(len(self.get_entropy_dst_ip()))]
         region_even = [0 for i in range(len(self.get_entropy_dst_ip()))]
         cnt = 0
         for item in list_attacks:
             cnt += 1
             attack_name = item[0]
-            isfrom = int(item[1])
-            isend = int(item[2])
+            isfrom = int(item[1])//self.time_interval
+            isend = int(item[2])//self.time_interval
             mid = (isend-isfrom)//2 + isfrom
             region_attacks[mid] = attack_name+'({0})'.format(str(mid))
             if cnt%2:
