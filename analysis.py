@@ -61,6 +61,7 @@ class PacketAnalysis():
         # get entropy
         with open(file, 'rb') as f:
             trace = dpkt.pcap.Reader(f)
+            data_linktype = trace.datalink() # check raw packet or not
             for ts, buf in trace:        
                 # get the first timestamp
                 if mode == 'one_trace' or mode == 'first':
@@ -94,12 +95,21 @@ class PacketAnalysis():
                 except dpkt.dpkt.NeedData: pass
                 
                 ## packet count
-                if eth.type != dpkt.ethernet.ETH_TYPE_IP: continue
-                else: 
+                if data_linktype==1 and eth.type==dpkt.ethernet.ETH_TYPE_IP: # Ethernet
+                    ip = eth.data
                     self.packet_count += 1
                     self.packet_length[ len(buf) ] += 1
-                
-                ip = eth.data
+                elif data_linktype == 101: #Raw
+                    ip = dpkt.ip.IP(buf)
+                    self.packet_count += 1
+                    self.packet_length[ len(buf) ] += 1
+                elif eth.type != dpkt.ethernet.ETH_TYPE_IP:
+                    continue
+                else:
+                    ip = eth.data
+                    self.packet_count += 1
+                    self.packet_length[ len(buf) ] += 1
+
                 self.src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
                 self.dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
                 self.proto[ ip.p ] += 1
