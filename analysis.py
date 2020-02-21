@@ -15,22 +15,35 @@ class PacketAnalysis():
         self.current_interval = None
         
         # counter parameter
-        self.packet_count = 0
+        ## entropy item
         self.src_ip = Counter()
         self.dst_ip = Counter()
         self.sport = Counter()
         self.dport = Counter()
         self.packet_length = Counter()
         self.proto = Counter()
+        ## count item
+        self.packet_count = 0
+        self.packet_length_count = 0
 
-        # collect entropy serires
-        self.list_packet_count = []
+        # statistic serires
+        ## collect entropy serires
         self.entropy_src_ip = []
         self.entropy_dst_ip = []
         self.entropy_sport = []
         self.entropy_dport = []
         self.entropy_packet_length = []
         self.entropy_proto = []
+        ## collect count serires
+        self.distinctItem_src_ip = []
+        self.distinctItem_dst_ip = []
+        self.distinctItem_sport = []
+        self.distinctItem_dport = []
+        self.distinctItem_packet_length = []
+        self.distinctItem_proto = []
+        self.total_packet_count = []
+        self.total_packet_length = []
+        self.average_packet_length = []
         
     def __cal_entropy_exact(self, container):
         total_items_cnt = 0
@@ -51,6 +64,25 @@ class PacketAnalysis():
 
         return entropy
 
+    def __cal_statistic_result(self):
+        # cal entropy result
+        self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
+        self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
+        self.entropy_sport.append(self.__cal_entropy_exact(self.sport))
+        self.entropy_dport.append(self.__cal_entropy_exact(self.dport))
+        self.entropy_packet_length.append(self.__cal_entropy_exact(self.packet_length))
+        self.entropy_proto.append(self.__cal_entropy_exact(self.proto))
+        # cal count result
+        self.distinctItem_src_ip.append( len(self.src_ip.values()) )
+        self.distinctItem_dst_ip.append( len(self.dst_ip.values()) )
+        self.distinctItem_sport.append( len(self.sport.values()) )
+        self.distinctItem_dport.append( len(self.dport.values()) )
+        self.distinctItem_packet_length.append( len(self.packet_length.values()) )
+        self.distinctItem_proto.append( len(self.proto.values()) )
+        self.total_packet_count.append(self.packet_count)
+        self.total_packet_length.append(self.packet_length_count)
+        self.average_packet_length.append(self.packet_length_count/self.packet_count)
+
     def trace_analysis(self, file, time_interval, mode):
         # mode = 'one_trace', 'first', 'mid', 'last'
 
@@ -67,24 +99,21 @@ class PacketAnalysis():
                 if mode == 'one_trace' or mode == 'first':
                     if self.first_time == None: self.first_time = ts
                 
-                # cal entropy result
+                # cal statistic result
                 while ts > (self.first_time+self.current_interval):
-                    self.list_packet_count.append(self.packet_count)
-                    self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
-                    self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
-                    self.entropy_sport.append(self.__cal_entropy_exact(self.sport))
-                    self.entropy_dport.append(self.__cal_entropy_exact(self.dport))
-                    self.entropy_packet_length.append(self.__cal_entropy_exact(self.packet_length))
-                    self.entropy_proto.append(self.__cal_entropy_exact(self.proto))
+                    self.__cal_statistic_result()
 
-                    # clear
-                    self.packet_count = 0
+                    # initial counter value
+                    ## entropy item
                     self.src_ip.clear()
                     self.dst_ip.clear()
                     self.sport.clear()
                     self.dport.clear()
                     self.packet_length.clear()
                     self.proto.clear()
+                    ## count item
+                    self.packet_count = 0
+                    self.packet_length_count = 0
 
                     # add current_interval
                     self.current_interval += time_interval
@@ -95,20 +124,24 @@ class PacketAnalysis():
                 except dpkt.dpkt.NeedData: pass
                 
                 ## packet count
+                buf_len = len(buf)
                 if data_linktype==1 and eth.type==dpkt.ethernet.ETH_TYPE_IP: # Ethernet
                     ip = eth.data
                     self.packet_count += 1
-                    self.packet_length[ len(buf) ] += 1
+                    self.packet_length[ buf_len ] += 1
+                    self.packet_length_count += buf_len
                 elif data_linktype == 101: #Raw
                     ip = dpkt.ip.IP(buf)
                     self.packet_count += 1
-                    self.packet_length[ len(buf) ] += 1
+                    self.packet_length[ buf_len ] += 1
+                    self.packet_length_count += buf_len
                 elif eth.type != dpkt.ethernet.ETH_TYPE_IP:
                     continue
                 else:
                     ip = eth.data
                     self.packet_count += 1
-                    self.packet_length[ len(buf) ] += 1
+                    self.packet_length[ buf_len ] += 1
+                    self.packet_length_count += buf_len
 
                 self.src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
                 self.dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
@@ -128,18 +161,13 @@ class PacketAnalysis():
                     except AttributeError: pass
             
         # end, put remaining data into list
-        if mode == 'one_trace' or mode == 'last':
-            self.list_packet_count.append(self.packet_count)
-            self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
-            self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
-            self.entropy_sport.append(self.__cal_entropy_exact(self.sport))
-            self.entropy_dport.append(self.__cal_entropy_exact(self.dport))
-            self.entropy_packet_length.append(self.__cal_entropy_exact(self.packet_length))
-            self.entropy_proto.append(self.__cal_entropy_exact(self.proto))
+        if mode == 'one_trace' or mode == 'last': self.__cal_statistic_result()
 
     # get interface
+    ## packet time
     def get_first_pkt_time(self):
         return self.first_time
+    ## entropy item
     def get_entropy_src_ip(self):
         return self.entropy_src_ip
     def get_entropy_dst_ip(self):
@@ -152,30 +180,61 @@ class PacketAnalysis():
         return self.entropy_packet_length
     def get_entropy_proto(self):
         return self.entropy_proto    
+    ## count item
+    def get_distinctItem_src_ip(self):
+        return self.distinctItem_src_ip
+    def get_distinctItem_dst_ip(self):
+        return self.distinctItem_dst_ip
+    def get_distinctItem_sport(self):
+        return self.distinctItem_sport
+    def get_distinctItem_dport(self):
+        return self.distinctItem_dport
+    def get_distinctItem_pkt_len(self):
+        return self.distinctItem_packet_length
+    def get_distinctItem_proto(self):
+        return self.distinctItem_proto
     def get_pkt_cnt(self):
-        return self.list_packet_count
+        return self.total_packet_count
+    def get_total_pkt_len_cnt(self):
+        return self.total_packet_length
+    def get_average_pkt_len_cnt(self):
+        return self.average_packet_length
+    ## initial this class
     def clear(self):
         # time parameter
         self.first_time = None
         self.current_interval = None
         
         # counter parameter
-        self.packet_count = 0
+        ## entropy item
         self.src_ip.clear()
         self.dst_ip.clear()
         self.sport.clear()
         self.dport.clear()
         self.packet_length.clear()
         self.proto.clear()
+        ## count item
+        self.packet_count = 0
+        self.packet_length_count = 0
 
         # collect entropy serires
-        self.list_packet_count = []
+        ## collect entropy serires
         self.entropy_src_ip = []
         self.entropy_dst_ip = []
         self.entropy_sport = []
         self.entropy_dport = []
         self.entropy_packet_length = []
         self.entropy_proto = []
+        ## collect count serires
+        self.distinctItem_src_ip = []
+        self.distinctItem_dst_ip = []
+        self.distinctItem_sport = []
+        self.distinctItem_dport = []
+        self.distinctItem_packet_length = []
+        self.distinctItem_proto = []
+        self.total_packet_count = []
+        self.total_packet_length = []
+        self.average_packet_length = []
 
 class TracePlot(PacketAnalysis):
     def __init__(self, time_interval, mode='sec'):
