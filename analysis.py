@@ -448,7 +448,7 @@ class TracePlot(PacketAnalysis):
             auto_open=False
         )
     def count_one_plot(self, item):
-        chart_file_name = './{0}/Distinct_{1}s_{2}.html'.format(
+        chart_file_name = './{0}/Distinct_{1}_{2}s_{3}.html'.format(
             self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
         
         list_data = [ self.data[i] for i in item ]
