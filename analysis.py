@@ -270,20 +270,37 @@ class TracePlot(PacketAnalysis):
     def __data_generator(self):
         time_axis = self.__time_axis()
         data = dict(
-            src_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_src_ip(), 
+            entropy_src_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_src_ip(), 
                     name='Source IP', marker={'color':'blue'}), 
-            dst_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_dst_ip(), 
+            entropy_dst_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_dst_ip(), 
                     name='Distination IP', marker={'color':'red'}),
-            sport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_sport(), 
+            entropy_sport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_sport(), 
                     name='Source Ports', marker={'color':'#00CC96'}),
-            dport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_dport(), 
+            entropy_dport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_dport(), 
                     name='Distination Ports', marker={'color':'#AB63FA'}),
-            pkt_cnt = plotly.graph_objs.Scatter(x=time_axis, y=self.get_pkt_cnt(), 
-                    name='Packet Count', marker={'color':'orange'}, yaxis='y2'),
-            pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_pkt_len(), 
-                    name='Packet Length', marker={'color':'pink'}),
-            proto = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_proto(), 
-                    name='Protocol', marker={'color':'#CCCC00'})
+            entropy_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_pkt_len(), 
+                    name='Packet Length', marker={'color':'#D9006C'}),
+            entropy_proto = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_proto(), 
+                    name='Protocol', marker={'color':'#CCCC00'}), 
+            
+            distinct_src_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_src_ip(), 
+                    name='Source IP', marker={'color':'blue'}),
+            distinct_dst_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_dst_ip(), 
+                    name='Source IP', marker={'color':'red'}),
+            distinct_sport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_sport(), 
+                    name='Source Ports', marker={'color':'#00CC96'}),
+            distinct_dport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_dport(), 
+                    name='Distination Ports', marker={'color':'#AB63FA'}),
+            distinct_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_pkt_len(), 
+                    name='Packet Length', marker={'color':'#D9006C'}),
+            distinct_proto = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_proto(), 
+                    name='Protocol', marker={'color':'#CCCC00'}), 
+            count_pkt_cnt = plotly.graph_objs.Scatter(x=time_axis, y=self.get_pkt_cnt(), 
+                    name='Packet Count', marker={'color':'#000000'}),
+            count_total_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_total_pkt_len_cnt(), 
+                    name='Total Packet Length', marker={'color':'#BB3D00'}, yaxis='y2'),
+            count_average_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_average_pkt_len_cnt(), 
+                    name='Average Packet Length', marker={'color':'#FF8000'}, yaxis='y2')
         )
         
         if self.__is_attack_list():
@@ -325,7 +342,8 @@ class TracePlot(PacketAnalysis):
         # pcap parameter
         try: self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
         except IndexError: self.name_input_pcap = input_pcap.split('/')[-1]
-        self.dir_name = 'Analysis_{0}s_{1}'.format(self.time_interval, self.name_input_pcap)
+        self.dir_name = 'Analysis_{0}_{1}s_{2}'.format(
+            self.mode, self.time_interval, self.name_input_pcap)
 
         # mkdir
         self.__mkdir()
@@ -339,7 +357,8 @@ class TracePlot(PacketAnalysis):
         # pcap parameter
         try: self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
         except IndexError: self.name_input_pcap = input_pcap.split('/')[-1]
-        self.dir_name = 'Analysis_{0}s_{1}'.format(self.time_interval, self.name_input_pcap)
+        self.dir_name = 'Analysis_{0}_{1}s_{2}'.format(
+            self.mode, self.time_interval, self.name_input_pcap)
 
         # mkdir
         self.__mkdir()
@@ -389,9 +408,9 @@ class TracePlot(PacketAnalysis):
         self.__data_update()
     
     # output plot, csv
-    def one_plot(self, item):
-        chart_file_name = './{0}/one_Analysis_{1}s_{2}.html'.format(
-            self.dir_name, self.time_interval, self.name_input_pcap)
+    def entropy_one_plot(self, item):
+        chart_file_name = './{0}/Entropy_{1}_{2}s_{3}.html'.format(
+            self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
         
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
@@ -421,10 +440,42 @@ class TracePlot(PacketAnalysis):
             filename=chart_file_name, 
             auto_open=False
         )
-    def seperate_plot(self, item):
+    def count_one_plot(self, item):
+        chart_file_name = './{0}/Distinct_{1}s_{2}.html'.format(
+            self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
+        
+        list_data = [ self.data[i] for i in item ]
+        if self.__is_attack_list():
+            list_data.append(self.data['odd_one'])
+            list_data.append(self.data['even_one'])
+
+        
+        if 'count_total_pkt_len' or 'count_average_pkt_len' in item:
+            layout_method = plotly.graph_objs.Layout(
+                title='Distinct Items of Trace: {0}'.format(self.name_input_pcap),
+                xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
+                yaxis=dict(title='Count'), 
+                xaxis2=dict(overlaying='x', side='top', title='Attacks'), 
+                yaxis2=dict(overlaying='y', side='right', title='Bytes')
+            )
+        else: 
+            layout_method = plotly.graph_objs.Layout(
+                title='Distinct Items of Trace: {0}'.format(self.name_input_pcap),
+                xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
+                yaxis=dict(title='Count'), 
+                xaxis2=dict(overlaying='x', side='top', title='Attacks')
+            )
+        
+        # plot
+        plotly.offline.plot(
+            {'data': list_data, 'layout': layout_method}, 
+            filename=chart_file_name, 
+            auto_open=False
+        )
+    def entropy_seperate_plot(self, item):
         num_chart = len(item)
-        chart_file_name = './{0}/sep_Analysis_{1}s_{2}.html'.format(
-            self.dir_name, self.time_interval, self.name_input_pcap)
+        chart_file_name = './{0}/sep_Entropy_{1}_{2}s_{3}.html'.format(
+            self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
 
         fig = plotly.subplots.make_subplots(
             rows=num_chart, cols=1, 
@@ -448,17 +499,30 @@ class TracePlot(PacketAnalysis):
         #fig.show()
         plotly.offline.plot(fig, filename=chart_file_name, auto_open=False)
     def csv_output(self):
-        title = ['time'+' ({0})'.format(self.mode), 'Src IP', 'Dst IP', 'Src Ports', 'Dst Ports', 
-                'Packet Count', 'Packet Length', 'Protocol', 'Attack']
+        title = ['time'+' ({0})'.format(self.mode), 
+                    'Src IP Entropy', 'Src IP DistinctItem', 
+                    'Dst IP Entropy', 'Dst IP DistinctItem', 
+                    'Src Ports Entropy', 'Src Ports DistinctItem',
+                    'Dst Ports Entropy', 'Dst Ports DistinctItem', 
+                    'Protocol Entropy', 'Protocol DistinctItem', 
+                    'Packet Length Entropy', 'Packet Length DistinctItem', 
+                    'Total Packet Length', 'Average Packet Length', 
+                    'Packet Count', 'Attack']
         time_axis = self.__time_axis()
-        items = [time_axis, self.get_entropy_src_ip(), self.get_entropy_dst_ip(), 
-                self.get_entropy_sport(), self.get_entropy_dport(), 
-                self.get_pkt_cnt(), self.get_entropy_pkt_len(), self.get_entropy_proto()]
+        items = [time_axis, 
+                self.get_entropy_src_ip(), self.get_distinctItem_src_ip(), 
+                self.get_entropy_dst_ip(), self.get_distinctItem_dst_ip(), 
+                self.get_entropy_sport(), self.get_distinctItem_sport(), 
+                self.get_entropy_dport(), self.get_distinctItem_dport(), 
+                self.get_entropy_proto(), self.get_distinctItem_proto(), 
+                self.get_entropy_pkt_len(), self.get_distinctItem_pkt_len(), 
+                self.get_total_pkt_len_cnt(), self.get_average_pkt_len_cnt(), 
+                self.get_pkt_cnt()]
         if self.__is_attack_list(): items.append(self.attack_data['csv'])
 
         csv_items = list( zip(*items) )
-        csv_output_file_name = './{0}/Analysis_{1}s_{2}.csv'.format(self.dir_name, 
-                self.time_interval, self.name_input_pcap)
+        csv_output_file_name = './{0}/Analysis_{1}_{2}s_{3}.csv'.format(self.dir_name, 
+                self.mode, self.time_interval, self.name_input_pcap)
         with open(csv_output_file_name, 'w', encoding='utf-8') as fout:
             writer = csv.writer(fout, delimiter=',')
             
@@ -494,7 +558,12 @@ if __name__ == '__main__':
     myplot = TracePlot(time_interval, mode)
     myplot.one_analysis(input_pcap)
     if attack_list != 'none': myplot.import_attack_list(attack_list)
-    myplot.one_plot(['src_ip', 'dst_ip', 'sport', 'dport', 'pkt_cnt', 'pkt_len', 'proto'])
-    myplot.seperate_plot(['src_ip', 'dst_ip', 'sport', 'dport', 'pkt_cnt', 'pkt_len', 'proto'])
+    myplot.entropy_one_plot(['entropy_src_ip', 'entropy_dst_ip', 'entropy_sport', 'entropy_dport', 
+                                'entropy_pkt_len', 'entropy_proto'])
+    myplot.entropy_seperate_plot(['entropy_src_ip', 'entropy_dst_ip', 'entropy_sport', 'entropy_dport', 
+                            'entropy_pkt_len', 'entropy_proto'])
+    myplot.count_one_plot(['count_pkt_cnt', 'count_total_pkt_len', 
+                                'distinct_src_ip', 'distinct_dst_ip', 'distinct_sport', 'distinct_dport', 
+                                'distinct_pkt_len', 'distinct_proto', 'count_average_pkt_len'])
     myplot.csv_output()
 
