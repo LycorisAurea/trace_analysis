@@ -286,7 +286,7 @@ class TracePlot(PacketAnalysis):
             distinct_src_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_src_ip(), 
                     name='Source IP', marker={'color':'blue'}),
             distinct_dst_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_dst_ip(), 
-                    name='Source IP', marker={'color':'red'}),
+                    name='Distination IP', marker={'color':'red'}),
             distinct_sport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_sport(), 
                     name='Source Ports', marker={'color':'#00CC96'}),
             distinct_dport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_dport(), 
