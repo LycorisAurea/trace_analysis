@@ -304,10 +304,10 @@ class TracePlot(PacketAnalysis):
         )
         
         if self.__is_attack_list():
-            data['odd_one'] = plotly.graph_objs.Scatter(
+            data['odd_one_entropy'] = plotly.graph_objs.Scatter(
                 x=self.attack_data['axis'], y=self.attack_data['odd'], name='Attacks', 
                 fill='tozeroy', marker={'color':'#A0A0A0'}, xaxis='x2')
-            data['even_one'] = plotly.graph_objs.Scatter(
+            data['even_one_entropy'] = plotly.graph_objs.Scatter(
                 x=self.attack_data['axis'], y=self.attack_data['even'], name='Attacks', 
                 fill='tozeroy', marker={'color':'#FFCCE5'}, xaxis='x2')
             
@@ -317,6 +317,13 @@ class TracePlot(PacketAnalysis):
             data['even_sep'] = plotly.graph_objs.Scatter(
                 x=time_axis, y=self.attack_data['even'], name='Attacks', 
                 fill='tozeroy', marker={'color':'#FFCCE5'})
+            
+            data['odd_one_count'] = plotly.graph_objs.Scatter(
+                x=self.attack_data['axis'], y=self.attack_data['odd'], name='Attacks', 
+                fill='tozeroy', marker={'color':'#A0A0A0'}, xaxis='x2', yaxis='y3')
+            data['even_one_count'] = plotly.graph_objs.Scatter(
+                x=self.attack_data['axis'], y=self.attack_data['even'], name='Attacks', 
+                fill='tozeroy', marker={'color':'#FFCCE5'}, xaxis='x2', yaxis='y3')
         
         return data
     def __data_update(self):
@@ -414,8 +421,8 @@ class TracePlot(PacketAnalysis):
         
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
-            list_data.append(self.data['odd_one'])
-            list_data.append(self.data['even_one'])
+            list_data.append(self.data['odd_one_entropy'])
+            list_data.append(self.data['even_one_entropy'])
 
         
         if 'pkt_cnt' in item:
@@ -446,8 +453,8 @@ class TracePlot(PacketAnalysis):
         
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
-            list_data.append(self.data['odd_one'])
-            list_data.append(self.data['even_one'])
+            list_data.append(self.data['odd_one_count'])
+            list_data.append(self.data['even_one_count'])
 
         
         if 'count_total_pkt_len' or 'count_average_pkt_len' in item:
@@ -456,14 +463,16 @@ class TracePlot(PacketAnalysis):
                 xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
                 yaxis=dict(title='Count'), 
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'), 
-                yaxis2=dict(overlaying='y', side='right', title='Bytes')
+                yaxis2=dict(overlaying='y', side='right', title='Bytes'),
+                yaxis3=dict(overlaying='y', side='right')
             )
         else: 
             layout_method = plotly.graph_objs.Layout(
                 title='Distinct Items of Trace: {0}'.format(self.name_input_pcap),
                 xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
                 yaxis=dict(title='Count'), 
-                xaxis2=dict(overlaying='x', side='top', title='Attacks')
+                xaxis2=dict(overlaying='x', side='top', title='Attacks'),
+                yaxis3=dict(overlaying='y', side='right')
             )
         
         # plot
