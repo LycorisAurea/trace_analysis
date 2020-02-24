@@ -124,24 +124,23 @@ class PacketAnalysis():
                 except dpkt.dpkt.NeedData: pass
                 
                 ## packet count
-                buf_len = len(buf)
                 if data_linktype==1 and eth.type==dpkt.ethernet.ETH_TYPE_IP: # Ethernet
                     ip = eth.data
                     self.packet_count += 1
-                    self.packet_length[ buf_len ] += 1
-                    self.packet_length_count += buf_len
+                    self.packet_length[ ip.len ] += 1
+                    self.packet_length_count += ip.len
                 elif data_linktype == 101: #Raw
                     ip = dpkt.ip.IP(buf)
                     self.packet_count += 1
-                    self.packet_length[ buf_len ] += 1
-                    self.packet_length_count += buf_len
+                    self.packet_length[ ip.len ] += 1
+                    self.packet_length_count += ip.len
                 elif eth.type != dpkt.ethernet.ETH_TYPE_IP:
                     continue
                 else:
                     ip = eth.data
                     self.packet_count += 1
-                    self.packet_length[ buf_len ] += 1
-                    self.packet_length_count += buf_len
+                    self.packet_length[ ip.len ] += 1
+                    self.packet_length_count += ip.len
 
                 self.src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
                 self.dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
