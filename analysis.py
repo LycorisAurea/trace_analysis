@@ -65,6 +65,9 @@ class PacketAnalysis():
         return entropy
 
     def __cal_statistic_result(self):
+        if self.packet_count == 0: average_packet_length = None
+        else: average_packet_length = self.packet_length_count/self.packet_count
+
         # cal entropy result
         self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
         self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
@@ -81,7 +84,7 @@ class PacketAnalysis():
         self.distinctItem_proto.append( len(self.proto.values()) )
         self.total_packet_count.append(self.packet_count)
         self.total_packet_length.append(self.packet_length_count)
-        self.average_packet_length.append(self.packet_length_count/self.packet_count)
+        self.average_packet_length.append(average_packet_length)
 
     def trace_analysis(self, file, time_interval, mode):
         # mode = 'one_trace', 'first', 'mid', 'last'
