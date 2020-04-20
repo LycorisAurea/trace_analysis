@@ -307,27 +307,17 @@ class TracePlot(PacketAnalysis):
         )
         
         if self.__is_attack_list():
-            data['odd_one_entropy'] = plotly.graph_objs.Scatter(
-                x=self.attack_data['axis'], y=self.attack_data['odd'], name='Attacks', 
-                fill='tozeroy', marker={'color':'#A0A0A0'}, xaxis='x2')
-            data['even_one_entropy'] = plotly.graph_objs.Scatter(
-                x=self.attack_data['axis'], y=self.attack_data['even'], name='Attacks', 
-                fill='tozeroy', marker={'color':'#FFCCE5'}, xaxis='x2')
+            data['one_entropy'] = plotly.graph_objs.Bar(
+                x=self.attack_data['axis'], y=self.attack_data['region'], name='Attacks', 
+                marker_color=self.attack_data['color'], opacity=0.6, , marker_line_width=0, xaxis='x2')
             
-            data['odd_sep'] = plotly.graph_objs.Scatter(
-                x=time_axis, y=self.attack_data['odd'], name='Attacks', 
-                fill='tozeroy', marker={'color':'#A0A0A0'})
-            data['even_sep'] = plotly.graph_objs.Scatter(
-                x=time_axis, y=self.attack_data['even'], name='Attacks', 
-                fill='tozeroy', marker={'color':'#FFCCE5'})
-            
-            data['odd_one_count'] = plotly.graph_objs.Scatter(
-                x=self.attack_data['axis'], y=self.attack_data['odd'], name='Attacks', 
-                fill='tozeroy', marker={'color':'#A0A0A0'}, xaxis='x2', yaxis='y3')
-            data['even_one_count'] = plotly.graph_objs.Scatter(
-                x=self.attack_data['axis'], y=self.attack_data['even'], name='Attacks', 
-                fill='tozeroy', marker={'color':'#FFCCE5'}, xaxis='x2', yaxis='y3')
-        
+            data['sep'] = plotly.graph_objs.Bar(
+                x=time_axis, y=self.attack_data['region'], name='Attacks', 
+                marker_color=self.attack_data['color'], opacity=0.6, marker_line_width=0)
+   
+            data['one_count'] = plotly.graph_objs.Bar(
+                x=self.attack_data['axis'], y=self.attack_data['region'], name='Attacks', 
+                marker_color=self.attack_data['color'], opacity=0.6, marker_line_width=0, xaxis='x2', yaxis='y3')
         return data
     def __data_update(self):
         self.data = self.__data_generator()
@@ -394,8 +384,8 @@ class TracePlot(PacketAnalysis):
                 else: continue
         csv_mark = ['' for i in range(len(self.get_entropy_dst_ip()))]
         region_attacks = [str(i)+'n' for i in range(len(self.get_entropy_dst_ip()))]
-        region_odd = [0 for i in range(len(self.get_entropy_dst_ip()))]
-        region_even = [0 for i in range(len(self.get_entropy_dst_ip()))]
+        region_value = [0 for i in range(len(self.get_entropy_dst_ip()))]
+        region_color = ['#A0A0A0', ]*len(self.get_entropy_dst_ip())
         cnt = 0
         for item in list_attacks:
             cnt += 1
@@ -408,13 +398,14 @@ class TracePlot(PacketAnalysis):
                 for num in range(isfrom-1, isend):
                     csv_mark[num] = attack_name
                     region_attacks[num] = attack_name+'({0})'.format(str(num))
-                    region_odd[num] = 1
+                    region_value[num] = 1
             else:
                 for num in range(isfrom-1, isend):
                     csv_mark[num] = attack_name
                     region_attacks[num] = attack_name+'({0})'.format(str(num))
-                    region_even[num] = 1
-        self.attack_data =  dict(csv=csv_mark, axis=region_attacks, odd=region_odd, even=region_even)
+                    region_value[num] = 1
+                    region_color[num] = '#FFCCE5'
+        self.attack_data =  dict(csv=csv_mark, axis=region_attacks, region=region_value, color=region_color)
         self.__data_update()
     
     # output plot, csv
@@ -424,8 +415,7 @@ class TracePlot(PacketAnalysis):
         
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
-            list_data.append(self.data['odd_one_entropy'])
-            list_data.append(self.data['even_one_entropy'])
+            list_data.append(self.data['one_entropy'])
 
         
         if 'pkt_cnt' in item:
@@ -434,14 +424,15 @@ class TracePlot(PacketAnalysis):
                 xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
                 yaxis=dict(title='Entropy'), 
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'), 
-                yaxis2=dict(overlaying='y', side='right', title='Packet Count')
+                bargap=0, barmode='group', bargroupgap=0
             )
         else: 
             layout_method = plotly.graph_objs.Layout(
                 title='Entropy of Trace: {0}'.format(self.name_input_pcap),
                 xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
                 yaxis=dict(title='Entropy'), 
-                xaxis2=dict(overlaying='x', side='top', title='Attacks')
+                xaxis2=dict(overlaying='x', side='top', title='Attacks'),
+                bargap=0, barmode='group', bargroupgap=0
             )
         
         # plot
@@ -456,8 +447,7 @@ class TracePlot(PacketAnalysis):
         
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
-            list_data.append(self.data['odd_one_count'])
-            list_data.append(self.data['even_one_count'])
+            list_data.append(self.data['one_count'])
 
         
         if 'count_total_pkt_len' or 'count_average_pkt_len' in item:
@@ -468,6 +458,7 @@ class TracePlot(PacketAnalysis):
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'), 
                 yaxis2=dict(overlaying='y', side='right', title='Bytes'),
                 yaxis3=dict(overlaying='y', side='right')
+                #bargap=0, barmode='group', bargroupgap=0
             )
         else: 
             layout_method = plotly.graph_objs.Layout(
@@ -476,6 +467,7 @@ class TracePlot(PacketAnalysis):
                 yaxis=dict(title='Count'), 
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'),
                 yaxis3=dict(overlaying='y', side='right')
+                #bargap=0, barmode='group', bargroupgap=0
             )
         
         # plot
@@ -497,8 +489,7 @@ class TracePlot(PacketAnalysis):
 
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
-            fig.add_trace( self.data['odd_sep'], row=1, col=1 )
-            fig.add_trace( self.data['even_sep'], row=1, col=1 )
+            fig.add_trace( self.data['sep'], row=1, col=1 )
         
         for i in range(num_chart):
             fig.add_trace( list_data[i], row=i+1, col=1 )
@@ -507,7 +498,7 @@ class TracePlot(PacketAnalysis):
         fig.update_xaxes(title='Time'+' ({0})'.format(self.mode), row=num_chart, col=1)
         
         # output
-        fig.update_layout(title='Entropy of Trace: {0}'.format(self.name_input_pcap))
+        fig.update_layout(title='Entropy of Trace: {0}'.format(self.name_input_pcap), bargap=0)
         #fig.show()
         plotly.offline.plot(fig, filename=chart_file_name, auto_open=False)
     def csv_output(self):
