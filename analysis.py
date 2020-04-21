@@ -251,6 +251,14 @@ class TracePlot(PacketAnalysis):
         self.mode = mode
         self.data = None
         self.attack_data = None
+        self.color = dict(
+            srcIP='#0000FF',     dstIP='#FF0000', 
+            sport='#00CC96',     dport='#AB63FA', 
+            pktLen='#FF8000',    proto='#CCCC00', 
+            pktCnt='#000000',    totalPktLen='#BB3D00', 
+            avrPktLen='#800080', markRegionOdd='#A0A0A0', 
+            markRegionEven='#FFCCE5'
+        )
     def __mkdir(self):
         os.system('mkdir {0}'.format(self.dir_name))
     def __time_axis(self):
@@ -274,42 +282,42 @@ class TracePlot(PacketAnalysis):
         time_axis = self.__time_axis()
         data = dict(
             entropy_src_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_src_ip(), 
-                    name='Source IP', marker={'color':'blue'}), 
+                    name='Source IP', marker={'color':self.color['srcIP']}), 
             entropy_dst_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_dst_ip(), 
-                    name='Distination IP', marker={'color':'red'}),
+                    name='Distination IP', marker={'color':self.color['dstIP']}),
             entropy_sport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_sport(), 
-                    name='Source Ports', marker={'color':'#00CC96'}),
+                    name='Source Ports', marker={'color':self.color['sport']}),
             entropy_dport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_dport(), 
-                    name='Distination Ports', marker={'color':'#AB63FA'}),
+                    name='Distination Ports', marker={'color':self.color['dport']}),
             entropy_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_pkt_len(), 
-                    name='Packet Length', marker={'color':'#D9006C'}),
+                    name='Packet Length', marker={'color':self.color['pktLen']}),
             entropy_proto = plotly.graph_objs.Scatter(x=time_axis, y=self.get_entropy_proto(), 
-                    name='Protocol', marker={'color':'#CCCC00'}), 
+                    name='Protocol', marker={'color':self.color['proto']}), 
             
             distinct_src_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_src_ip(), 
-                    name='Source IP', marker={'color':'blue'}),
+                    name='Source IP', marker={'color':self.color['srcIP']}),
             distinct_dst_ip = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_dst_ip(), 
-                    name='Distination IP', marker={'color':'red'}),
+                    name='Distination IP', marker={'color':self.color['dstIP']}),
             distinct_sport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_sport(), 
-                    name='Source Ports', marker={'color':'#00CC96'}),
+                    name='Source Ports', marker={'color':self.color['sport']}),
             distinct_dport = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_dport(), 
-                    name='Distination Ports', marker={'color':'#AB63FA'}),
+                    name='Distination Ports', marker={'color':self.color['dport']}),
             distinct_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_pkt_len(), 
-                    name='Packet Length', marker={'color':'#D9006C'}),
+                    name='Packet Length', marker={'color':self.color['pktLen']}),
             distinct_proto = plotly.graph_objs.Scatter(x=time_axis, y=self.get_distinctItem_proto(), 
-                    name='Protocol', marker={'color':'#CCCC00'}), 
+                    name='Protocol', marker={'color':self.color['proto']}), 
             count_pkt_cnt = plotly.graph_objs.Scatter(x=time_axis, y=self.get_pkt_cnt(), 
-                    name='Packet Count', marker={'color':'#000000'}),
+                    name='Packet Count', marker={'color':self.color['pktCnt']}),
             count_total_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_total_pkt_len_cnt(), 
-                    name='Total Packet Length', marker={'color':'#BB3D00'}, yaxis='y2'),
+                    name='Total Packet Length', marker={'color':self.color['totalPktLen']}, yaxis='y2'),
             count_average_pkt_len = plotly.graph_objs.Scatter(x=time_axis, y=self.get_average_pkt_len_cnt(), 
-                    name='Average Packet Length', marker={'color':'#FF8000'}, yaxis='y2')
+                    name='Average Packet Length', marker={'color':self.color['avrPktLen']}, yaxis='y2')
         )
         
         if self.__is_attack_list():
             data['one_entropy'] = plotly.graph_objs.Bar(
                 x=self.attack_data['axis'], y=self.attack_data['region'], name='Attacks', 
-                marker_color=self.attack_data['color'], opacity=0.6, , marker_line_width=0, xaxis='x2')
+                marker_color=self.attack_data['color'], opacity=0.6 , marker_line_width=0, xaxis='x2')
             
             data['sep'] = plotly.graph_objs.Bar(
                 x=time_axis, y=self.attack_data['region'], name='Attacks', 
@@ -385,7 +393,7 @@ class TracePlot(PacketAnalysis):
         csv_mark = ['' for i in range(len(self.get_entropy_dst_ip()))]
         region_attacks = [str(i)+'n' for i in range(len(self.get_entropy_dst_ip()))]
         region_value = [0 for i in range(len(self.get_entropy_dst_ip()))]
-        region_color = ['#A0A0A0', ]*len(self.get_entropy_dst_ip())
+        region_color = [self.color['markRegionOdd'], ]*len(self.get_entropy_dst_ip())
         cnt = 0
         for item in list_attacks:
             cnt += 1
@@ -404,7 +412,7 @@ class TracePlot(PacketAnalysis):
                     csv_mark[num] = attack_name
                     region_attacks[num] = attack_name+'({0})'.format(str(num))
                     region_value[num] = 1
-                    region_color[num] = '#FFCCE5'
+                    region_color[num] = self.color['markRegionEven']
         self.attack_data =  dict(csv=csv_mark, axis=region_attacks, region=region_value, color=region_color)
         self.__data_update()
     
@@ -424,7 +432,8 @@ class TracePlot(PacketAnalysis):
                 xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
                 yaxis=dict(title='Entropy'), 
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'), 
-                bargap=0, barmode='group', bargroupgap=0
+                yaxis2=dict(overlaying='y', side='right', title='Packet Count'),
+                bargap=0
             )
         else: 
             layout_method = plotly.graph_objs.Layout(
@@ -432,7 +441,7 @@ class TracePlot(PacketAnalysis):
                 xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
                 yaxis=dict(title='Entropy'), 
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'),
-                bargap=0, barmode='group', bargroupgap=0
+                bargap=0
             )
         
         # plot
@@ -457,8 +466,8 @@ class TracePlot(PacketAnalysis):
                 yaxis=dict(title='Count'), 
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'), 
                 yaxis2=dict(overlaying='y', side='right', title='Bytes'),
-                yaxis3=dict(overlaying='y', side='right')
-                #bargap=0, barmode='group', bargroupgap=0
+                yaxis3=dict(overlaying='y', side='right'),
+                bargap=0
             )
         else: 
             layout_method = plotly.graph_objs.Layout(
@@ -466,8 +475,8 @@ class TracePlot(PacketAnalysis):
                 xaxis=dict(title='Time'+' ({0})'.format(self.mode)), 
                 yaxis=dict(title='Count'), 
                 xaxis2=dict(overlaying='x', side='top', title='Attacks'),
-                yaxis3=dict(overlaying='y', side='right')
-                #bargap=0, barmode='group', bargroupgap=0
+                yaxis3=dict(overlaying='y', side='right'), 
+                bargap=0
             )
         
         # plot
