@@ -44,6 +44,9 @@ class PacketAnalysis():
         self.total_packet_count = []
         self.total_packet_length = []
         self.average_packet_length = []
+
+        # entropy calculation
+        self.table = None
         
     def __cal_entropy_exact(self, container):
         total_items_cnt = 0
@@ -63,18 +66,79 @@ class PacketAnalysis():
         entropy /= math.log(total_items_cnt)
 
         return entropy
+    
+    def __cal_entropy_est_table(self, container):
+        # k_value = 4, table_size=65536
+        ## parameter
+        k_value = 4
+        k_register = [0,] * k_value
+        total_item_cnt = 0
+        entropy = 0
+        
+        ## function
+        def hash_affine(in_data):
+            para_a = [0xF28CF7CA, 0x8A00D025, 0x206FB589, 0xC0604F01]
+            para_b = [0xAB57266E, 0xC7D7CD89, 0xDB89F988, 0xB12C2FF1]
+            mersenne_p = 2**31-1
 
-    def __cal_statistic_result(self):
+            hash_result = []
+            for i in range(k_value):
+                result = (para_a[i]*in_data + para_b[i])%mersenne_p
+                hash_result.append(result%65536)
+            return hash_result
+        def str_to_int(in_data):
+            if isinstance(in_data, str):
+                # is ip
+                int_ip = 0
+                for i in range(4):
+                    int_ip += (int(in_data.split('.')[i]) << ((3-i)*8))
+                return int_ip       
+            else: return in_data
+        
+        ## read results and calculate
+        for item, cnt in container.most_common():
+            # total cnt
+            total_item_cnt += cnt
+
+            # hash
+            hash_result = hash_affine( str_to_int(item) )
+
+            # query table
+            try: query_result = [self.table[item] for item in hash_result]
+            except TypeError:
+                print('Error: No table.')
+                exit(0)
+
+            # store k value
+            for i in range(k_value):
+                k_register[i] += query_result[i] * cnt
+
+        # est entropy
+        if total_item_cnt ==0 or total_item_cnt == 1: return None
+        else: 
+            for i in range(k_value):
+                k_register[i] /= total_item_cnt
+                entropy += math.exp(k_register[i])
+            entropy /= k_value
+            entropy = -math.log(entropy)
+            entropy /= math.log(total_item_cnt)
+            return entropy
+
+    def __cal_statistic_result(self, cal_entropy=None):
+        # default cal method
+        if cal_entropy == None: cal_entropy=self.__cal_entropy_exact
+        
+        # zero divide protection
         if self.packet_count == 0: average_packet_length = None
         else: average_packet_length = self.packet_length_count/self.packet_count
 
         # cal entropy result
-        self.entropy_src_ip.append(self.__cal_entropy_exact(self.src_ip))
-        self.entropy_dst_ip.append(self.__cal_entropy_exact(self.dst_ip))
-        self.entropy_sport.append(self.__cal_entropy_exact(self.sport))
-        self.entropy_dport.append(self.__cal_entropy_exact(self.dport))
-        self.entropy_packet_length.append(self.__cal_entropy_exact(self.packet_length))
-        self.entropy_proto.append(self.__cal_entropy_exact(self.proto))
+        self.entropy_src_ip.append(cal_entropy(self.src_ip))
+        self.entropy_dst_ip.append(cal_entropy(self.dst_ip))
+        self.entropy_sport.append(cal_entropy(self.sport))
+        self.entropy_dport.append(cal_entropy(self.dport))
+        self.entropy_packet_length.append(cal_entropy(self.packet_length))
+        self.entropy_proto.append(cal_entropy(self.proto))
         # cal count result
         self.distinctItem_src_ip.append( len(self.src_ip.values()) )
         self.distinctItem_dst_ip.append( len(self.dst_ip.values()) )
@@ -86,8 +150,14 @@ class PacketAnalysis():
         self.total_packet_length.append(self.packet_length_count)
         self.average_packet_length.append(average_packet_length)
 
-    def trace_analysis(self, file, time_interval, mode):
+    def trace_analysis(self, file, time_interval, mode, entropy_cal_method='exact'):
         # mode = 'one_trace', 'first', 'mid', 'last'
+        # entropy_cal_method = 'exact', 'est_table65536'
+
+        # choice of est method
+        if entropy_cal_method == 'exact': entropy_cal_function = self.__cal_entropy_exact
+        elif entropy_cal_method == 'est_table65536': 
+            entropy_cal_function = self.__cal_entropy_est_table
 
         # time parameter
         if mode == 'one_trace' or mode == 'first':
@@ -104,7 +174,7 @@ class PacketAnalysis():
                 
                 # cal statistic result
                 while ts > (self.first_time+self.current_interval):
-                    self.__cal_statistic_result()
+                    self.__cal_statistic_result(entropy_cal_function)
 
                     # initial counter value
                     ## entropy item
@@ -163,7 +233,14 @@ class PacketAnalysis():
                     except AttributeError: pass
             
         # end, put remaining data into list
-        if mode == 'one_trace' or mode == 'last': self.__cal_statistic_result()
+        if mode == 'one_trace' or mode == 'last': self.__cal_statistic_result(entropy_cal_function)
+
+    def import_table(self, table_path):
+        self.table = []
+        with open(table_path, 'r') as fin:
+            lines = fin.readlines()
+            for line in lines:
+                self.table.append( int(line) )
 
     # get interface
     ## packet time
@@ -346,7 +423,7 @@ class TracePlot(PacketAnalysis):
 
     # analysis
     ## one trace file
-    def one_analysis(self, input_pcap):
+    def one_analysis(self, input_pcap, entropy_cal_method='exact'):
         # pcap parameter
         try: self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
         except IndexError: self.name_input_pcap = input_pcap.split('/')[-1]
@@ -357,11 +434,11 @@ class TracePlot(PacketAnalysis):
         self.__mkdir()
 
         # analysis trace
-        self.trace_analysis(input_pcap, self.time_interval, 'one_trace')  
+        self.trace_analysis(input_pcap, self.time_interval, 'one_trace', entropy_cal_method)  
         self.__data_update()
     
     ## several trace file
-    def first_sep_analysis(self, input_pcap):
+    def first_sep_analysis(self, input_pcap, entropy_cal_method='exact'):
         # pcap parameter
         try: self.name_input_pcap = input_pcap.split('/')[-1].split('.')[:-1][0]
         except IndexError: self.name_input_pcap = input_pcap.split('/')[-1]
@@ -372,11 +449,11 @@ class TracePlot(PacketAnalysis):
         self.__mkdir()
 
         # analysis trace
-        self.trace_analysis(input_pcap, self.time_interval, 'first')
-    def mid_sep_analysis(self, input_pcap):
-        self.trace_analysis(input_pcap, self.time_interval, 'mid')
-    def last_sep_analysis(self, input_pcap):
-        self.trace_analysis(input_pcap, self.time_interval, 'last')
+        self.trace_analysis(input_pcap, self.time_interval, 'first', entropy_cal_method)
+    def mid_sep_analysis(self, input_pcap, entropy_cal_method='exact'):
+        self.trace_analysis(input_pcap, self.time_interval, 'mid', entropy_cal_method)
+    def last_sep_analysis(self, input_pcap, entropy_cal_method='exact'):
+        self.trace_analysis(input_pcap, self.time_interval, 'last', entropy_cal_method)
         self.__data_update()
 
     # add attack list
