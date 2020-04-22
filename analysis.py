@@ -9,7 +9,7 @@ import datetime
 from collections import Counter
 
 class PacketAnalysis():
-    def __init__(self):
+    def __init__(self, byteorder='big'):
         # time parameter
         self.first_time = None
         self.current_interval = None
@@ -47,6 +47,9 @@ class PacketAnalysis():
 
         # entropy calculation
         self.table = None
+
+        # data type
+        self.byteorder = byteorder
         
     def __cal_entropy_exact(self, container):
         total_items_cnt = 0
@@ -86,14 +89,6 @@ class PacketAnalysis():
                 result = (para_a[i]*in_data + para_b[i])%mersenne_p
                 hash_result.append(result%65536)
             return hash_result
-        def str_to_int(in_data):
-            if isinstance(in_data, str):
-                # is ip
-                int_ip = 0
-                for i in range(4):
-                    int_ip += (int(in_data.split('.')[i]) << ((3-i)*8))
-                return int_ip       
-            else: return in_data
         
         ## read results and calculate
         for item, cnt in container.most_common():
@@ -101,7 +96,7 @@ class PacketAnalysis():
             total_item_cnt += cnt
 
             # hash
-            hash_result = hash_affine( str_to_int(item) )
+            hash_result = hash_affine(item)
 
             # query table
             try: query_result = [self.table[item] for item in hash_result]
@@ -215,8 +210,8 @@ class PacketAnalysis():
                     self.packet_length[ ip.len ] += 1
                     self.packet_length_count += ip.len
 
-                self.src_ip[ socket.inet_ntop(socket.AF_INET, ip.src) ] += 1
-                self.dst_ip[ socket.inet_ntop(socket.AF_INET, ip.dst) ] += 1
+                self.src_ip[ int.from_bytes(ip.src, byteorder=self.byteorder) ] += 1
+                self.dst_ip[ int.from_bytes(ip.dst, byteorder=self.byteorder) ] += 1
                 self.proto[ ip.p ] += 1
                 
                 if ip.p == dpkt.ip.IP_PROTO_TCP:
