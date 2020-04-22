@@ -313,9 +313,6 @@ class PacketAnalysis():
         # entropy calculation
         self.table = None
 
-        # data type
-        self.byteorder = byteorder
-
 class TracePlot(PacketAnalysis):
     def __init__(self, time_interval, mode='sec'):
         super(TracePlot, self).__init__()
