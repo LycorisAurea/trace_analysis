@@ -323,6 +323,7 @@ class TracePlot(PacketAnalysis):
         self.time_interval = time_interval
         self.name_input_pcap = None
         self.dir_name = None
+        self.output_location = ''
 
         # graph parameter
         self.mode = mode
@@ -337,7 +338,7 @@ class TracePlot(PacketAnalysis):
             markRegionEven='#FFCCE5'
         )
     def __mkdir(self):
-        os.system('mkdir {0}'.format(self.dir_name))
+        os.system('mkdir {0}{1}'.format(self.output_location, self.dir_name))
     def __time_axis(self):
         time_axis = [i+1 for i in range(len(self.get_entropy_src_ip()))]
         if self.mode == 'real':
@@ -493,10 +494,15 @@ class TracePlot(PacketAnalysis):
         self.attack_data =  dict(csv=csv_mark, axis=region_attacks, region=region_value, color=region_color)
         self.__data_update()
     
+    # assign output location
+    def import_output_location(self, location):
+        if location[-1] == '/': self.output_location = location
+        else: self.output_location = location + '/'
+
     # output plot, csv
     def entropy_one_plot(self, item):
-        chart_file_name = './{0}/Entropy_{1}_{2}s_{3}.html'.format(
-            self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
+        chart_file_name = '{0}{1}/Entropy_{2}_{3}s_{4}.html'.format(
+            self.output_location, self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
         
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
@@ -528,8 +534,8 @@ class TracePlot(PacketAnalysis):
             auto_open=False
         )
     def count_one_plot(self, item):
-        chart_file_name = './{0}/Distinct_{1}_{2}s_{3}.html'.format(
-            self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
+        chart_file_name = '{0}{1}/Distinct_{2}_{3}s_{4}.html'.format(
+            self.output_location, self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
         
         list_data = [ self.data[i] for i in item ]
         if self.__is_attack_list():
@@ -564,8 +570,8 @@ class TracePlot(PacketAnalysis):
         )
     def entropy_seperate_plot(self, item):
         num_chart = len(item)
-        chart_file_name = './{0}/sep_Entropy_{1}_{2}s_{3}.html'.format(
-            self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
+        chart_file_name = '{0}{1}/sep_Entropy_{2}_{3}s_{4}.html'.format(
+            self.output_location, self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
 
         fig = plotly.subplots.make_subplots(
             rows=num_chart, cols=1, 
@@ -610,8 +616,8 @@ class TracePlot(PacketAnalysis):
         if self.__is_attack_list(): items.append(self.attack_data['csv'])
 
         csv_items = list( zip(*items) )
-        csv_output_file_name = './{0}/Analysis_{1}_{2}s_{3}.csv'.format(self.dir_name, 
-                self.mode, self.time_interval, self.name_input_pcap)
+        csv_output_file_name = '{0}{1}/Analysis_{2}_{3}s_{4}.csv'.format(self.output_location, 
+            self.dir_name, self.mode, self.time_interval, self.name_input_pcap)
         with open(csv_output_file_name, 'w', encoding='utf-8') as fout:
             writer = csv.writer(fout, delimiter=',')
             
