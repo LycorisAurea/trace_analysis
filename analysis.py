@@ -235,7 +235,7 @@ class PacketAnalysis():
         with open(table_path, 'r') as fin:
             lines = fin.readlines()
             for line in lines:
-                self.table.append( int(line) )
+                self.table.append( float(line) )
 
     # get interface
     ## packet time
