@@ -135,31 +135,31 @@ class PacketAnalysis():
             # give item as seed
             random.seed(item)
 
-            # skewed stable distribution F(x; 1,−1, π/2, 0)
-            u1 = random.uniform(0, 1)
-            u2 = random.uniform(0, 1)
-
-            w1 = math.pi * (u1-0.5)
-            w2 = -math.log(u2)
-
-            ran1 = math.tan(w1) * (math.pi/2 - w1)
-            ran2 = math.log( w2 * math.cos(w1) / (math.pi/2-w1) )
-            ran = ran1 + ran2
-
-            # store k value
             for i in range(k_value):
+                # skewed stable distribution F(x; 1,−1, π/2, 0)
+                u1 = random.uniform(0, 1)
+                u2 = random.uniform(0, 1)
+
+                w1 = math.pi * (u1-0.5)
+                w2 = -math.log(u2)
+
+                ran1 = math.tan(w1) * (math.pi/2 - w1)
+                ran2 = math.log( w2 * math.cos(w1) / (math.pi/2-w1) )
+                ran = ran1 + ran2
+                
+                # store k value
                 k_register[i] += ran * cnt
             
-            # est entropy
-            if total_item_cnt ==0 or total_item_cnt == 1: return None
-            else: 
-                for i in range(k_value):
-                    k_register[i] /= total_item_cnt
-                    entropy += math.exp(k_register[i])
-                entropy /= k_value
-                entropy = -math.log(entropy)
-                entropy /= math.log(total_item_cnt)
-                return entropy
+        # est entropy
+        if total_item_cnt ==0 or total_item_cnt == 1: return None
+        else: 
+            for i in range(k_value):
+                k_register[i] /= total_item_cnt
+                entropy += math.exp(k_register[i])
+            entropy /= k_value
+            entropy = -math.log(entropy)
+            entropy /= math.log(total_item_cnt)
+            return entropy
 
     def __cal_statistic_result(self, cal_entropy=None):
         # default cal method
