@@ -47,7 +47,8 @@ class PacketAnalysis():
         self.average_packet_length = []
 
         # entropy calculation
-        self.table = None
+        self.table = []
+        self.k_value = None
 
         # data type
         self.byteorder = byteorder
@@ -72,59 +73,63 @@ class PacketAnalysis():
         return entropy
     
     def __cal_entropy_est_table(self, container):
-        # k_value = 4, table_size=65536
-        ## parameter
-        k_value = 4
-        k_register = [0,] * k_value
-        total_item_cnt = 0
-        entropy = 0
+        # parameter
+        all_entropy = []
+        result_entropy = 0
         
-        ## function
-        def hash_affine(in_data):
+        # function
+        def hash_affine(in_data, table_size):
             para_a = [0xF28CF7CA, 0x8A00D025, 0x206FB589, 0xC0604F01]
             para_b = [0xAB57266E, 0xC7D7CD89, 0xDB89F988, 0xB12C2FF1]
             mersenne_p = 2**31-1
 
             hash_result = []
-            for i in range(k_value):
+            for i in range(self.k_value):
                 result = (para_a[i]*in_data + para_b[i])%mersenne_p
-                hash_result.append(result%65536)
+                hash_result.append(result%table_size)
             return hash_result
         
-        ## read results and calculate
-        for item, cnt in container.most_common():
-            # total cnt
-            total_item_cnt += cnt
+        # get entropy of each table
+        for table in self.table:
+            ## parameter
+            k_register = [0,] * self.k_value
+            total_item_cnt = 0
+            entropy = 0
+            
+            ## read results and calculate
+            for item, cnt in container.most_common():
+                # total cnt
+                total_item_cnt += cnt
 
-            # hash
-            hash_result = hash_affine(item)
+                # hash
+                hash_result = hash_affine(item, len(table))
 
-            # query table
-            try: query_result = [self.table[item] for item in hash_result]
-            except TypeError:
-                print('Error: No table.')
-                exit(0)
+                # query table
+                query_result = [table[key] for key in hash_result]
 
-            # store k value
-            for i in range(k_value):
-                k_register[i] += query_result[i] * cnt
+                # store k value
+                for i in range(self.k_value):
+                    k_register[i] += query_result[i] * cnt
 
-        # est entropy
-        if total_item_cnt ==0 or total_item_cnt == 1: return None
-        else: 
-            for i in range(k_value):
-                k_register[i] /= total_item_cnt
-                entropy += math.exp(k_register[i])
-            entropy /= k_value
-            entropy = -math.log(entropy)
-            entropy /= math.log(total_item_cnt)
-            return entropy
+            ## est entropy
+            if total_item_cnt ==0 or total_item_cnt == 1: return None
+            else: 
+                for i in range(self.k_value):
+                    k_register[i] /= total_item_cnt
+                    entropy += math.exp(k_register[i])
+                entropy /= self.k_value
+                entropy = -math.log(entropy)
+                entropy /= math.log(total_item_cnt)
+                all_entropy.append(entropy)
+
+        # calculate average entropy
+        for item in all_entropy: result_entropy += item
+        result_entropy /= len(all_entropy)
+        return result_entropy
     
     def __cal_entropy_est_clifford(self, container):
-        # k_value = 6
-        ## parameter
-        k_value = 6
-        k_register = [0,] * k_value
+        # parameter
+        k_register = [0,] * self.k_value
         total_item_cnt = 0
         entropy = 0
 
@@ -135,7 +140,7 @@ class PacketAnalysis():
             # give item as seed
             random.seed(item)
 
-            for i in range(k_value):
+            for i in range(self.k_value):
                 # skewed stable distribution F(x; 1,−1, π/2, 0)
                 u1 = random.uniform(0, 1)
                 u2 = random.uniform(0, 1)
@@ -153,10 +158,10 @@ class PacketAnalysis():
         # est entropy
         if total_item_cnt ==0 or total_item_cnt == 1: return None
         else: 
-            for i in range(k_value):
+            for i in range(self.k_value):
                 k_register[i] /= total_item_cnt
                 entropy += math.exp(k_register[i])
-            entropy /= k_value
+            entropy /= self.k_value
             entropy = -math.log(entropy)
             entropy /= math.log(total_item_cnt)
             return entropy
@@ -189,12 +194,12 @@ class PacketAnalysis():
 
     def trace_analysis(self, file, time_interval, mode, entropy_cal_method='exact'):
         # mode = 'one_trace', 'first', 'mid', 'last'
-        # entropy_cal_method = 'exact', 'est_clifford', 'est_table65536'
+        # entropy_cal_method = 'exact', 'est_clifford', 'est_tables'
 
         # choice of est method
         if entropy_cal_method == 'exact': entropy_cal_function = self.__cal_entropy_exact
         elif entropy_cal_method == 'est_clifford': entropy_cal_function = self.__cal_entropy_est_clifford
-        elif entropy_cal_method == 'est_table65536': entropy_cal_function = self.__cal_entropy_est_table
+        elif entropy_cal_method == 'est_tables': entropy_cal_function = self.__cal_entropy_est_table
 
         # time parameter
         if mode == 'one_trace' or mode == 'first':
@@ -273,11 +278,17 @@ class PacketAnalysis():
         if mode == 'one_trace' or mode == 'last': self.__cal_statistic_result(entropy_cal_function)
 
     def import_table(self, table_path):
-        self.table = []
-        with open(table_path, 'r') as fin:
-            lines = fin.readlines()
-            for line in lines:
-                self.table.append( float(line) )
+        for path in table_path:
+            table = []
+            with open(path, 'r') as fin:
+                lines = fin.readlines()
+                for line in lines:
+                    try: table.append( float(line) )
+                    except ValueError: continue
+            self.table.append(table)
+
+    def import_k_value(self, k_value):
+        self.k_value = k_value
 
     # get interface
     ## packet time
@@ -353,7 +364,7 @@ class PacketAnalysis():
         self.average_packet_length = []
 
         # entropy calculation
-        self.table = None
+        self.table = []
 
 class TracePlot(PacketAnalysis):
     def __init__(self, time_interval, mode='sec'):
