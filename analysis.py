@@ -79,8 +79,14 @@ class PacketAnalysis():
         
         # function
         def hash_affine(in_data, table_size):
-            para_a = [0xF28CF7CA, 0x8A00D025, 0x206FB589, 0xC0604F01]
-            para_b = [0xAB57266E, 0xC7D7CD89, 0xDB89F988, 0xB12C2FF1]
+            para_a = [
+                0xF28CF7CA, 0x8A00D025, 0x206FB589, 0xC0604F01, 0xB21D60F4, 
+                0x5B1E746, 0x1350A5F4, 0xA492C1E5, 0x4FF69EA, 0x3B0EE62
+            ]
+            para_b = [
+                0xAB57266E, 0xC7D7CD89, 0xDB89F988, 0xB12C2FF1, 0xDA09D5B4, 
+                0x82E653C0, 0x2F294A52, 0xBAF79C78, 0x2C661EEF, 0x99CCFC31
+            ]
             mersenne_p = 2**31-1
 
             hash_result = []
