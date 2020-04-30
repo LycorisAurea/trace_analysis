@@ -1,4 +1,4 @@
-from analysis import *
+import analysis
 
 # pcap file path
 file1 = 'example_1.pcap'
@@ -9,7 +9,7 @@ file4 = 'example_4.pcap'
 # analysis parameter
 mode = 'sec'
 time_interval = 60
-myplot = TracePlot(time_interval, mode)
+myplot = analysis.TracePlot(time_interval, mode)
 
 # give pcap file
 print('Now analysis pcap 1')
@@ -25,7 +25,7 @@ print('Now analysis pcap 4')
 myplot.last_sep_analysis(file4)
 
 # give attack list
-myplot.import_attack_list('example_attack_list.txt')
+myplot.import_attack_list('attack_list_example.txt')
 
 # plot picture
 myplot.entropy_one_plot(['entropy_src_ip', 'entropy_dst_ip', 'entropy_sport', 'entropy_dport', 
