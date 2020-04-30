@@ -1,0 +1,11 @@
+# <attack name> <attack start time> <attack end time>
+# The unit is second
+
+slowbody2 3180 7080
+slowread 7140 8520
+ddossim 8580 10200
+goldeneye 10260 10620
+slowheaders 10680 11280
+rudy 11340 12480
+ddossim 12540 12540
+

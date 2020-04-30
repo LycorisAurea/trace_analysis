@@ -522,6 +522,7 @@ class TracePlot(PacketAnalysis):
             for line in lines:
                 info = line.strip('\n')
                 if info != '':
+                    if info[0] == '#': continue
                     info = info.split(' ')
                     list_attacks.append(info)
                 else: continue
