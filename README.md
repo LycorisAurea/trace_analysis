@@ -26,7 +26,7 @@ This project analizes flows of trace files and outputs to charts.
 
 ## How To Use
 
-### `Calculating exact entropy values (One Trace File)`
+### Calculating exact entropy values (One Trace File)
 
 * Usage :
 
@@ -35,17 +35,17 @@ This project analizes flows of trace files and outputs to charts.
     ```
 
   * `trace file` : The path of the trace file you want to analysis.
-  * `attack list`: The time of attack ranges. If you don't have attack list, you can fill in 'none'. Refer to `attack_list_example.txt` for details.
+  * `attack list`: The time of attack ranges. If you don't have attack list, you can fill in 'none'. Refer to **_attack_list_example.txt_** for details.
   * `mode` : The display mode of x-axis showing in charts, csv files. 'real' option will display real packet time in trace files.
   * `time interval` : The time interval range to analysis trace files. The unit is second.
 
-### `Calculating exact entropy values (Several Trace Files)`
+### Calculating exact entropy values (Several Trace Files)
 
 Some large trace may be seperated to seveal smaller files. It needs to import method in `analysis.py` to process trace files.
 
-* Usage : Refer to `sep_trace_example.py` for details.
+* Usage : Refer to **_sep_trace_example.py_** for details.
 
-### `Advanced Features`
+### Advanced Features
 
 * Select Output Elements
   * Entropy value - You can select the **6 entropy elements** to output or no : `Source IP`, `Destination IP`, `Source Port`, `Destination Port`, `Packet Length`, `Protocol`.
