@@ -26,7 +26,7 @@ This project analizes flows of trace files and outputs to charts.
 
 ## How To Use
 
-### Calculating exact entropy values (One Trace File)
+### Calculate exact entropy values (One Trace File)
 
 * Usage :
 
@@ -39,7 +39,7 @@ This project analizes flows of trace files and outputs to charts.
   * `mode` : The display mode of x-axis showing in charts, csv files. 'real' option will display real packet time in trace files.
   * `time interval` : The time interval range to analysis trace files. The unit is second.
 
-### Calculating exact entropy values (Several Trace Files)
+### Calculate exact entropy values (Several Trace Files)
 
 Some large trace may be seperated to seveal smaller files. It needs to import method in `analysis.py` to process trace files.
 
@@ -66,3 +66,11 @@ Some large trace may be seperated to seveal smaller files. It needs to import me
      'count_pkt_cnt', 'count_total_pkt_len','count_average_pkt_len']
     )
     ```
+
+### Developer Mode
+
+To simulate the modification of the [sketching algorithm of Clifford and Cosma](http://proceedings.mlr.press/v31/clifford13a.pdf), this project implement related functions.
+
+* The sketch algorithm of the paper
+
+* The table methods (modification version)
