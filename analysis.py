@@ -178,28 +178,24 @@ class PacketAnalysis():
         result_entropy = 0
         
         # function
-        def hash_affine(in_data, table_size):
-            para_a = [
-                0xF28CF7CA, 0x8A00D025, 0x206FB589, 0xC0604F01, 0xB21D60F4, 
-                0x5B1E746, 0x1350A5F4, 0xA492C1E5, 0x4FF69EA, 0x3B0EE62, 
-                0x42C2C69, 0x21E0C9D7, 0xa9894d6e, 0x29915818, 0xe244e6ca, 
-                0x9d7ea43d, 0x67bd8005, 0xbc54fb46, 0x9697ff6e, 0xc6de48f0
-            ]
-            para_b = [
-                0xAB57266E, 0xC7D7CD89, 0xDB89F988, 0xB12C2FF1, 0xDA09D5B4, 
-                0x82E653C0, 0x2F294A52, 0xBAF79C78, 0x2C661EEF, 0x99CCFC31, 
-                0x6DB8DF96, 0xD30A3210, 0xa54d6cf9, 0x1f0c08ee, 0x7c46bea2, 
-                0x6a7e9cad, 0x5ffee981, 0xf0347f49, 0x64671ba2, 0xe91e4092
-            ]
-            mersenne_p = 2**7-1
+        def lcg(in_data, table_size):
+            para_a = 1103515245 # LCG gcc parameter
+            para_b = 12345 # LCG gcc parameter
+            mod_m = 2**31
 
-            hash_result = []
+            lcg_result = []
+            result = in_data
+            index_max = int( math.sqrt(table_size) )
             for i in range(self.k_value):
-                result_a = (para_a[i]*in_data + para_b[i])%mersenne_p
-                result_b = (para_a[i+10]*in_data + para_b[i+10])%mersenne_p
-                result_combine = result_a + result_b*(mersenne_p+1)
-                hash_result.append(result_combine)
-            return hash_result
+                result = (para_a * result + para_b) % mod_m
+                key_a = result % index_max
+                
+                result = (para_a * result + para_b) % mod_m
+                key_b = result % index_max
+
+                key_combine = key_a + key_b*index_max
+                lcg_result.append(key_combine)
+            return lcg_result
         
         # get entropy of each table
         for table in self.table:
@@ -214,7 +210,7 @@ class PacketAnalysis():
                 total_item_cnt += cnt
 
                 # hash
-                hash_result = hash_affine(item, len(table))
+                hash_result = lcg(item, len(table))
 
                 # query table
                 query_result = [table[key] for key in hash_result]
