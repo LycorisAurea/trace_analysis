@@ -172,6 +172,73 @@ class PacketAnalysis():
             entropy /= math.log(total_item_cnt)
             return entropy
 
+    def __cal_entropy_est_table_square(self, container):
+        # parameter
+        all_entropy = []
+        result_entropy = 0
+        
+        # function
+        def hash_affine(in_data, table_size):
+            para_a = [
+                0xF28CF7CA, 0x8A00D025, 0x206FB589, 0xC0604F01, 0xB21D60F4, 
+                0x5B1E746, 0x1350A5F4, 0xA492C1E5, 0x4FF69EA, 0x3B0EE62, 
+                0x42C2C69, 0x21E0C9D7, 0xa9894d6e, 0x29915818, 0xe244e6ca, 
+                0x9d7ea43d, 0x67bd8005, 0xbc54fb46, 0x9697ff6e, 0xc6de48f0
+            ]
+            para_b = [
+                0xAB57266E, 0xC7D7CD89, 0xDB89F988, 0xB12C2FF1, 0xDA09D5B4, 
+                0x82E653C0, 0x2F294A52, 0xBAF79C78, 0x2C661EEF, 0x99CCFC31, 
+                0x6DB8DF96, 0xD30A3210, 0xa54d6cf9, 0x1f0c08ee, 0x7c46bea2, 
+                0x6a7e9cad, 0x5ffee981, 0xf0347f49, 0x64671ba2, 0xe91e4092
+            ]
+            mersenne_p = 2**7-1
+
+            hash_result = []
+            for i in range(self.k_value):
+                result_a = (para_a[i]*in_data + para_b[i])%mersenne_p
+                result_b = (para_a[i+10]*in_data + para_b[i+10])%mersenne_p
+                result_combine = result_a + result_b*(mersenne_p+1)
+                hash_result.append(result_combine)
+            return hash_result
+        
+        # get entropy of each table
+        for table in self.table:
+            ## parameter
+            k_register = [0,] * self.k_value
+            total_item_cnt = 0
+            entropy = 0
+            
+            ## read results and calculate
+            for item, cnt in container.most_common():
+                # total cnt
+                total_item_cnt += cnt
+
+                # hash
+                hash_result = hash_affine(item, len(table))
+
+                # query table
+                query_result = [table[key] for key in hash_result]
+
+                # store k value
+                for i in range(self.k_value):
+                    k_register[i] += query_result[i] * cnt
+
+            ## est entropy
+            if total_item_cnt ==0 or total_item_cnt == 1: return None
+            else: 
+                for i in range(self.k_value):
+                    k_register[i] /= total_item_cnt
+                    entropy += math.exp(k_register[i])
+                entropy /= self.k_value
+                entropy = -math.log(entropy)
+                entropy /= math.log(total_item_cnt)
+                all_entropy.append(entropy)
+
+        # calculate average entropy
+        for item in all_entropy: result_entropy += item
+        result_entropy /= len(all_entropy)
+        return result_entropy
+
     def __cal_statistic_result(self, cal_entropy=None):
         # default cal method
         if cal_entropy == None: cal_entropy=self.__cal_entropy_exact
@@ -198,6 +265,66 @@ class PacketAnalysis():
         self.total_packet_length.append(self.packet_length_count)
         self.average_packet_length.append(average_packet_length)
 
+    def trans_pcap_to_csv(self, file, output_file):
+        with open(file, 'rb') as f:
+            trace = dpkt.pcap.Reader(f)
+            data_linktype = trace.datalink() # check raw packet or not
+
+            # open csv file
+            with open(output_file, 'w', encoding='utf-8') as fout:
+                writer = csv.writer(fout, delimiter=',')
+                writer.writerow(
+                    ['Time', 'Source IP', 'Destination IP', 'Source Port', 
+                    'Destination Port', 'IP Length', 'Protocol']
+                )
+
+                # read packet
+                for ts, buf in trace:        
+                    srcIP = ''
+                    dstIP = ''
+                    sport = ''
+                    dport = ''
+                    ipLen = ''
+                    proto = ''
+                    
+                    # get items
+                    try: eth = dpkt.ethernet.Ethernet(buf)
+                    except AttributeError: pass
+                    except dpkt.dpkt.NeedData: pass
+                    
+                    ## packet count
+                    if data_linktype==1 and eth.type==dpkt.ethernet.ETH_TYPE_IP: # Ethernet
+                        ip = eth.data
+                        ipLen = ip.len
+                    elif data_linktype == 101: #Raw
+                        ip = dpkt.ip.IP(buf)
+                        ipLen = ip.len
+                    elif eth.type != dpkt.ethernet.ETH_TYPE_IP:
+                        continue
+                    else:
+                        ip = eth.data
+                        ipLen = ip.len
+
+                    srcIP = int.from_bytes(ip.src, byteorder=self.byteorder)
+                    dstIP = int.from_bytes(ip.dst, byteorder=self.byteorder)
+                    proto = ip.p
+                    
+                    if ip.p == dpkt.ip.IP_PROTO_TCP:
+                        try:
+                            tcp = ip.data
+                            sport = tcp.sport
+                            dport = tcp.dport  
+                        except AttributeError: pass
+                    elif ip.p == dpkt.ip.IP_PROTO_UDP:
+                        try:
+                            udp = ip.data
+                            sport = udp.sport
+                            dport = udp.dport
+                        except AttributeError: pass
+                    
+                    # output to csv file
+                    writer.writerow([ts, srcIP, dstIP, sport, dport, ipLen, proto])
+                
     def trace_analysis(self, file, time_interval, mode, entropy_cal_method='exact'):
         # mode = 'one_trace', 'first', 'mid', 'last'
         # entropy_cal_method = 'exact', 'est_clifford', 'est_tables'
@@ -206,6 +333,7 @@ class PacketAnalysis():
         if entropy_cal_method == 'exact': entropy_cal_function = self.__cal_entropy_exact
         elif entropy_cal_method == 'est_clifford': entropy_cal_function = self.__cal_entropy_est_clifford
         elif entropy_cal_method == 'est_tables': entropy_cal_function = self.__cal_entropy_est_table
+        elif entropy_cal_method == 'est_tables_square': entropy_cal_function = self.__cal_entropy_est_table_square
 
         # time parameter
         if mode == 'one_trace' or mode == 'first':
@@ -215,7 +343,8 @@ class PacketAnalysis():
         with open(file, 'rb') as f:
             trace = dpkt.pcap.Reader(f)
             data_linktype = trace.datalink() # check raw packet or not
-            for ts, buf in trace:        
+            for ts, buf in trace:  
+                print(ts)      
                 # get the first timestamp
                 if mode == 'one_trace' or mode == 'first':
                     if self.first_time == None: self.first_time = ts
@@ -279,6 +408,103 @@ class PacketAnalysis():
                         self.sport[udp.sport] += 1
                         self.dport[udp.dport] += 1
                     except AttributeError: pass
+            
+        # end, put remaining data into list
+        if mode == 'one_trace' or mode == 'last': self.__cal_statistic_result(entropy_cal_function)
+    
+    def trace_analysis_csv(self, file, time_interval, mode, entropy_cal_method='exact'):
+        # mode = 'one_trace', 'first', 'mid', 'last'
+        # entropy_cal_method = 'exact', 'est_clifford', 'est_tables'
+
+        # choice of est method
+        if entropy_cal_method == 'exact': entropy_cal_function = self.__cal_entropy_exact
+        elif entropy_cal_method == 'est_clifford': entropy_cal_function = self.__cal_entropy_est_clifford
+        elif entropy_cal_method == 'est_tables': entropy_cal_function = self.__cal_entropy_est_table
+        elif entropy_cal_method == 'est_tables_square': entropy_cal_function = self.__cal_entropy_est_table_square
+
+        # time parameter
+        if mode == 'one_trace' or mode == 'first':
+            self.current_interval = time_interval
+        
+        # get entropy
+        with open(file, 'r', newline='') as fin:
+            # time=0, srcIP=1, dstIP=2, sport=3, dport=4, pktLen=5, proto=6         
+            rows = csv.reader(fin)
+            for element in rows:   
+                # get element
+                ## time  
+                try: ts = float(element[0])
+                except ValueError: continue
+                
+                ## ip
+                if element[1] != '': srcIP = int(element[1])
+                else: srcIP = None
+                
+                if element[2] != '': dstIP = int(element[2])
+                else: dstIP = None
+                
+                ## port
+                if element[3] != '': sport = int(element[3])
+                else: sport = None
+                
+                if element[4] != '': dport = int(element[4])
+                else: dport = None
+                
+                ## pktLen
+                if element[5] != '': pktLen = int(element[5])
+                else: pktLen = None
+                
+                ## proto
+                if element[6] != '': proto = int(element[6])
+                else: proto = None
+                
+                
+                # get the first timestamp
+                if mode == 'one_trace' or mode == 'first':
+                    if self.first_time == None: self.first_time = ts
+                
+                # cal statistic result
+                while ts > (self.first_time+self.current_interval):
+                    # del None
+                    del self.src_ip[None]
+                    del self.dst_ip[None]
+                    del self.sport[None]
+                    del self.dport[None]
+                    del self.packet_length[None]
+                    del self.proto[None]
+
+                    
+                    self.__cal_statistic_result(entropy_cal_function)
+
+                    # initial counter value
+                    ## entropy item
+                    self.src_ip.clear()
+                    self.dst_ip.clear()
+                    self.sport.clear()
+                    self.dport.clear()
+                    self.packet_length.clear()
+                    self.proto.clear()
+                    ## count item
+                    self.packet_count = 0
+                    self.packet_length_count = 0
+
+                    # add current_interval
+                    self.current_interval += time_interval
+                
+                # get items
+                ## packet count
+                self.packet_count += 1
+                self.packet_length[ pktLen ] += 1
+                self.packet_length_count += pktLen
+                
+                ## ip
+                self.src_ip[ srcIP ] += 1
+                self.dst_ip[ dstIP ] += 1
+                self.proto[ proto ] += 1
+
+                ## port
+                self.sport[sport] += 1
+                self.dport[dport] += 1
             
         # end, put remaining data into list
         if mode == 'one_trace' or mode == 'last': self.__cal_statistic_result(entropy_cal_function)
@@ -492,7 +718,10 @@ class TracePlot(PacketAnalysis):
         self.__mkdir()
 
         # analysis trace
-        self.trace_analysis(input_pcap, self.time_interval, 'one_trace', entropy_cal_method)  
+        if os.path.splitext(input_pcap)[1] == '.csv':
+            self.trace_analysis_csv(input_pcap, self.time_interval, 'one_trace', entropy_cal_method) 
+        else: 
+            self.trace_analysis(input_pcap, self.time_interval, 'one_trace', entropy_cal_method)  
         self.__data_update()
     
     ## several trace file
