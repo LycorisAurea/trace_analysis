@@ -507,7 +507,15 @@ class PacketAnalysis():
                 self.dport[dport] += 1
             
         # end, put remaining data into list
-        if mode == 'one_trace' or mode == 'last': self.__cal_statistic_result(entropy_cal_function)
+        if mode == 'one_trace' or mode == 'last': 
+            # del None
+            del self.src_ip[None]
+            del self.dst_ip[None]
+            del self.sport[None]
+            del self.dport[None]
+            del self.packet_length[None]
+            del self.proto[None]
+            self.__cal_statistic_result(entropy_cal_function)
 
     def import_table(self, table_path):
         for path in table_path:
