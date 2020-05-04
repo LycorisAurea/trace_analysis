@@ -81,11 +81,15 @@ class PacketAnalysis():
         def hash_affine(in_data, table_size):
             para_a = [
                 0xF28CF7CA, 0x8A00D025, 0x206FB589, 0xC0604F01, 0xB21D60F4, 
-                0x5B1E746, 0x1350A5F4, 0xA492C1E5, 0x4FF69EA, 0x3B0EE62
+                0x5B1E746, 0x1350A5F4, 0xA492C1E5, 0x4FF69EA, 0x3B0EE62, 
+                0x42C2C69, 0x21E0C9D7, 0xA9894D6E, 0x29915818, 0xE244E6CA, 
+                0x9D7EA43D, 0x67BD8005, 0xBC54FB46, 0x9697FF6E, 0xC6DE48F0
             ]
             para_b = [
                 0xAB57266E, 0xC7D7CD89, 0xDB89F988, 0xB12C2FF1, 0xDA09D5B4, 
-                0x82E653C0, 0x2F294A52, 0xBAF79C78, 0x2C661EEF, 0x99CCFC31
+                0x82E653C0, 0x2F294A52, 0xBAF79C78, 0x2C661EEF, 0x99CCFC31, 
+                0x6DB8DF96, 0xD30A3210, 0xA54D6CF9, 0x1F0C08EE, 0x7C46BEA2, 
+                0x6A7E9CAD, 0x5FFEE981, 0xF0347F49, 0x64671BA2, 0xE91E4092
             ]
             mersenne_p = 2**31-1
 
@@ -150,6 +154,15 @@ class PacketAnalysis():
                 # skewed stable distribution F(x; 1,−1, π/2, 0)
                 u1 = random.uniform(0, 1)
                 u2 = random.uniform(0, 1)
+                """
+                # unit 0.01
+                u1 = int(u1*10000); u1 /= 10000
+                if u1==0: u1=0.0001
+                if u1==1: u1=0.9999
+                u2 = int(u2*10000); u2 /= 10000
+                if u2==0: u2=0.0001
+                if u2==1: u2=0.9999
+                """
 
                 w1 = math.pi * (u1-0.5)
                 w2 = -math.log(u2)
