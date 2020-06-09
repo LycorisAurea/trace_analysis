@@ -199,12 +199,18 @@ class PacketAnalysis():
             lcg_result = []
             result = in_data
             index_max = int( math.sqrt(table_size) )
+            index_max_para = int( math.sqrt(table_size) )
+            index_shift = 0
+            while index_max_para != 1:
+                index_max_para = index_max_para >> 1
+                index_shift += 1
+
             for i in range(self.k_value):
                 result = (para_a * result + para_b) % mod_m
-                key_a = result % index_max
+                key_a = result >> (31-index_shift)
                 
                 result = (para_a * result + para_b) % mod_m
-                key_b = result % index_max
+                key_b = result >> (31-index_shift)
 
                 key_combine = key_a + key_b*index_max
                 lcg_result.append(key_combine)
@@ -336,7 +342,7 @@ class PacketAnalysis():
                 
     def trace_analysis(self, file, time_interval, mode, entropy_cal_method='exact'):
         # mode = 'one_trace', 'first', 'mid', 'last'
-        # entropy_cal_method = 'exact', 'est_clifford', 'est_tables'
+        # entropy_cal_method = 'exact', 'est_clifford', 'est_tables', 'est_tables_square'
 
         # choice of est method
         if entropy_cal_method == 'exact': entropy_cal_function = self.__cal_entropy_exact
@@ -352,8 +358,7 @@ class PacketAnalysis():
         with open(file, 'rb') as f:
             trace = dpkt.pcap.Reader(f)
             data_linktype = trace.datalink() # check raw packet or not
-            for ts, buf in trace:  
-                print(ts)      
+            for ts, buf in trace:        
                 # get the first timestamp
                 if mode == 'one_trace' or mode == 'first':
                     if self.first_time == None: self.first_time = ts
@@ -423,7 +428,7 @@ class PacketAnalysis():
     
     def trace_analysis_csv(self, file, time_interval, mode, entropy_cal_method='exact'):
         # mode = 'one_trace', 'first', 'mid', 'last'
-        # entropy_cal_method = 'exact', 'est_clifford', 'est_tables'
+        # entropy_cal_method = 'exact', 'est_clifford', 'est_tables', 'est_tables_square'
 
         # choice of est method
         if entropy_cal_method == 'exact': entropy_cal_function = self.__cal_entropy_exact
