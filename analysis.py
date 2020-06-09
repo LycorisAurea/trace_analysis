@@ -8,6 +8,7 @@ import random
 import socket
 import datetime
 from collections import Counter
+import cal_entropy_method as cemd
 
 class PacketAnalysis():
     def __init__(self, byteorder='big'):
@@ -349,6 +350,9 @@ class PacketAnalysis():
         elif entropy_cal_method == 'est_clifford': entropy_cal_function = self.__cal_entropy_est_clifford
         elif entropy_cal_method == 'est_tables': entropy_cal_function = self.__cal_entropy_est_table
         elif entropy_cal_method == 'est_tables_square': entropy_cal_function = self.__cal_entropy_est_table_square
+        else: 
+            entropy_cal_function = cemd.method_dic[entropy_cal_method]
+            cemd.k_value = self.k_value
 
         # time parameter
         if mode == 'one_trace' or mode == 'first':
@@ -435,6 +439,9 @@ class PacketAnalysis():
         elif entropy_cal_method == 'est_clifford': entropy_cal_function = self.__cal_entropy_est_clifford
         elif entropy_cal_method == 'est_tables': entropy_cal_function = self.__cal_entropy_est_table
         elif entropy_cal_method == 'est_tables_square': entropy_cal_function = self.__cal_entropy_est_table_square
+        else: 
+            entropy_cal_function = cemd.method_dic[entropy_cal_method]
+            cemd.k_value = self.k_value
 
         # time parameter
         if mode == 'one_trace' or mode == 'first':
