@@ -351,8 +351,8 @@ class PacketAnalysis():
         elif entropy_cal_method == 'est_tables': entropy_cal_function = self.__cal_entropy_est_table
         elif entropy_cal_method == 'est_tables_square': entropy_cal_function = self.__cal_entropy_est_table_square
         else: 
-            entropy_cal_function = cemd.method_dic[entropy_cal_method]
-            cemd.k_value = self.k_value
+            other_mathods = cemd.CalEntropyMethods(self.k_value)
+            entropy_cal_function = other_mathods.do(entropy_cal_method)
 
         # time parameter
         if mode == 'one_trace' or mode == 'first':
@@ -440,8 +440,8 @@ class PacketAnalysis():
         elif entropy_cal_method == 'est_tables': entropy_cal_function = self.__cal_entropy_est_table
         elif entropy_cal_method == 'est_tables_square': entropy_cal_function = self.__cal_entropy_est_table_square
         else: 
-            entropy_cal_function = cemd.method_dic[entropy_cal_method]
-            cemd.k_value = self.k_value
+            other_mathods = cemd.CalEntropyMethods(self.k_value)
+            entropy_cal_function = other_mathods.do(entropy_cal_method)
 
         # time parameter
         if mode == 'one_trace' or mode == 'first':
