@@ -1,11 +1,13 @@
 import math
+import random
 
 class CalEntropyMethods():
     def __init__(self, k_value):
         self.k_value = k_value
         self.method_dic = dict(
             est_square16384_affine40_remainder_origin=self.calEntropy_estTable_square16384_affine40_remainder_origin,
-            est_square16384_affine40_mersenne_stageTableEnd=self.calEntropy_estTable_square16384_affine40_mersenne_stageTableEnd
+            est_square16384_affine40_mersenne_stageTableEnd=self.calEntropy_estTable_square16384_affine40_mersenne_stageTableEnd,
+            est_pingli=self.calEntropy_pingli
         )
 
     def do(self, method):
@@ -194,3 +196,49 @@ class CalEntropyMethods():
         result_entropy /= len(all_entropy)
         return result_entropy
 
+    def calEntropy_pingli(self, container):
+        # method parameter
+        alpha = 0.999999
+        delta = 1 - alpha
+
+        
+        # get entropy of each table
+        ## parameter
+        x_register = [0,] * self.k_value
+        entropy = 0
+        total_item_cnt = 0
+
+        ## read results and calculate
+        for item, cnt in container.most_common():
+            ### total cnt
+            total_item_cnt += cnt
+
+            ### set seed
+            random.seed(item)
+
+            for i in range(self.k_value):
+                v = random.uniform(0, math.pi)
+                w = -math.log( random.uniform(0, 1) ) # here log is ln
+                
+                r_1 = math.sin(alpha * v)
+                r_2 = pow( math.sin(v), (1/alpha) )
+                r_3_1 = math.sin(v * delta)
+                r_3 = pow( (r_3_1/w), (delta/alpha) )
+                r = (r_1/r_2) * (r_3)
+
+                x_register[i] += r * cnt
+        
+        ## cal j_value
+        j_1 = delta / self.k_value
+        j_2 = 0
+        for i in range(self.k_value): j_2 += pow( x_register[i], (-alpha/delta) )
+        j_value = j_1 * j_2
+
+        ## est entropy
+        h_1 = -math.log2(j_value)
+        h_2_1 = 1/delta
+        h_2_2 = math.log2(total_item_cnt)
+        h_2 = h_2_1 * h_2_2
+        entropy = h_1 - h_2
+
+        return entropy
