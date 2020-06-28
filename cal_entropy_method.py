@@ -1,5 +1,6 @@
 import math
 import random
+import decimal as dec
 
 class CalEntropyMethods():
     def __init__(self, k_value):
@@ -198,14 +199,15 @@ class CalEntropyMethods():
         return result_entropy
 
     def calEntropy_pingli(self, container):
+        #dec.getcontext().prec = 10000
         # method parameter
-        alpha = 0.999999
+        alpha = 0.9999
         delta = 1 - alpha
 
         
         # get entropy of each table
         ## parameter
-        x_register = [0,] * self.k_value
+        x_register = [dec.Decimal(0),] * self.k_value
         entropy = 0
         total_item_cnt = 0
 
@@ -227,22 +229,23 @@ class CalEntropyMethods():
                 r_3 = pow( (r_3_1/w), (delta/alpha) )
                 r = (r_1/r_2) * (r_3)
 
-                x_register[i] += r * cnt
+                x_register[i] += dec.Decimal(r * cnt)
         
         ## cal j_value
-        j_1 = delta / self.k_value
-        j_2 = 0
-        for i in range(self.k_value): j_2 += pow( x_register[i], (-alpha/delta) )
+        j_1 = dec.Decimal(delta / self.k_value)
+        j_2 = dec.Decimal(0)
+        alt_pow = dec.Decimal(-alpha/delta)
+        for i in range(self.k_value): j_2 += x_register[i]**alt_pow
         j_value = j_1 * j_2
 
         ## est entropy
-        h_1 = -math.log2(j_value)
-        h_2_1 = 1/delta
-        h_2_2 = math.log2(total_item_cnt)
+        h_1 = -j_value.log10()
+        h_2_1 = dec.Decimal(1/delta)
+        h_2_2 = dec.Decimal(total_item_cnt).log10()
         h_2 = h_2_1 * h_2_2
         entropy = h_1 - h_2
 
-        return entropy
+        return float(entropy / h_2_2)
 
     def calEntropy_estTable_square16384_affine40_mersenne_stageTableAve_round(self, container):
         # parameter
