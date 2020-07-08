@@ -9,7 +9,19 @@ class CalEntropyMethods():
             est_square16384_affine40_remainder_origin=self.calEntropy_estTable_square16384_affine40_remainder_origin,
             est_square16384_affine40_mersenne_stageTableEnd=self.calEntropy_estTable_square16384_affine40_mersenne_stageTableEnd,
             est_pingli=self.calEntropy_pingli, 
-            est_square16384_affine40_mersenne_stageTableAve_round=self.calEntropy_estTable_square16384_affine40_mersenne_stageTableAve_round
+            est_square16384_affine40_mersenne_stageTableAve_round=self.calEntropy_estTable_square16384_affine40_mersenne_stageTableAve_round,
+            est_clifford_u1u2Dot5_outputDotFull=self.find_est_clifford_u1u2DotX_outputDotX(5, None),
+            est_clifford_u1u2Dot4_outputDotFull=self.find_est_clifford_u1u2DotX_outputDotX(4, None),
+            est_clifford_u1u2Dot3_outputDotFull=self.find_est_clifford_u1u2DotX_outputDotX(3, None),
+            est_clifford_u1u2Dot2_outputDotFull=self.find_est_clifford_u1u2DotX_outputDotX(2, None),
+            est_clifford_u1u2Dot1_outputDotFull=self.find_est_clifford_u1u2DotX_outputDotX(1, None),
+            est_clifford_u1u2Dot4Power2_outputDotFull=self.find_est_clifford_u1u2DotX2_outputDotX(4, None),
+            est_clifford_u1u2Dot4Power2_outputDot5=self.find_est_clifford_u1u2DotX2_outputDotX(4, 5),
+            est_clifford_u1u2Dot4Power2_outputDot4=self.find_est_clifford_u1u2DotX2_outputDotX(4, 4),
+            est_clifford_u1u2Dot4Power2_outputDot3=self.find_est_clifford_u1u2DotX2_outputDotX(4, 3),
+            est_clifford_u1u2Dot4Power2_outputDot2=self.find_est_clifford_u1u2DotX2_outputDotX(4, 2),
+            est_clifford_u1u2Dot4Power2_outputDot1=self.find_est_clifford_u1u2DotX2_outputDotX(4, 1),
+            est_clifford_u1u2Dot4Power2_outputDot0=self.find_est_clifford_u1u2DotX2_outputDotX(4, 0)
         )
 
     def do(self, method):
@@ -345,3 +357,116 @@ class CalEntropyMethods():
         for item in all_entropy: result_entropy += item
         result_entropy /= len(all_entropy)
         return result_entropy
+
+    def find_est_clifford_u1u2DotX_outputDotX(self, u1u2_dot, output_dot):    
+        
+        def est_clifford_u1u2DotX_outputDotX(container):
+            # parameter
+            k_register = [0,] * self.k_value
+            total_item_cnt = 0
+            entropy = 0
+            for item, cnt in container.most_common():
+                # total cnt
+                total_item_cnt += cnt
+                
+                # give item as seed
+                random.seed(item)
+                for i in range(self.k_value):
+                    # skewed stable distribution F(x; 1,−1, π/2, 0)
+                    u1 = random.uniform(0, 1)
+                    u2 = random.uniform(0, 1)
+                    
+                    # unit X
+                    if u1u2_dot == None: pass
+                    else: 
+                        u1 = round(u1, u1u2_dot)
+                        if u1==0: u1=pow(10, -u1u2_dot)
+                        if u1==1: u1=1-pow(10, -u1u2_dot)
+                        
+                        u2 = round(u2, u1u2_dot)
+                        if u2==0: u2=pow(10, -u1u2_dot)
+                        if u2==1: u2=1-pow(10, -u1u2_dot)
+                    
+                    w1 = math.pi * (u1-0.5)
+                    w2 = -math.log(u2)
+                    ran1 = math.tan(w1) * (math.pi/2 - w1)
+                    ran2 = math.log( w2 * math.cos(w1) / (math.pi/2-w1) )
+                    ran = ran1 + ran2
+
+                    # unit X
+                    if output_dot == None: pass
+                    else: ran = round(ran, output_dot)
+                    
+                    # store k value
+                    k_register[i] += ran * cnt
+                
+            # est entropy
+            if total_item_cnt ==0 or total_item_cnt == 1: return None
+            else: 
+                for i in range(self.k_value):
+                    k_register[i] /= total_item_cnt
+                    entropy += math.exp(k_register[i])
+                entropy /= self.k_value
+                entropy = -math.log(entropy)
+                entropy /= math.log(total_item_cnt)
+                return entropy
+        
+        return est_clifford_u1u2DotX_outputDotX
+
+    def find_est_clifford_u1u2DotX2_outputDotX(self, u1u2_dot, output_dot):    
+        
+        def est_clifford_u1u2DotX2_outputDotX(container):
+            # parameter
+            k_register = [0,] * self.k_value
+            total_item_cnt = 0
+            entropy = 0
+            for item, cnt in container.most_common():
+                # total cnt
+                total_item_cnt += cnt
+                
+                # give item as seed
+                random.seed(item)
+                for i in range(self.k_value):
+                    # skewed stable distribution F(x; 1,−1, π/2, 0)
+                    u1 = random.uniform(0, 1)
+                    u2 = random.uniform(0, 1)
+                    
+                    # unit X
+                    if u1u2_dot == None: pass
+                    else: 
+                        two_power = 1
+                        while two_power < pow(10,u1u2_dot): two_power *= 2
+
+                        u1 = round(u1*two_power); u1 /= two_power
+                        if u1==0: u1=pow(10, -u1u2_dot)
+                        if u1==1: u1=1-pow(10, -u1u2_dot)
+                        
+                        u2 = round(u2*two_power); u2 /= two_power
+                        if u2==0: u2=pow(10, -u1u2_dot)
+                        if u2==1: u2=1-pow(10, -u1u2_dot)
+                    
+                    w1 = math.pi * (u1-0.5)
+                    w2 = -math.log(u2)
+                    ran1 = math.tan(w1) * (math.pi/2 - w1)
+                    ran2 = math.log( w2 * math.cos(w1) / (math.pi/2-w1) )
+                    ran = ran1 + ran2
+
+                    # unit X
+                    if output_dot == None: pass
+                    else: ran = round(ran, output_dot)
+                    
+                    # store k value
+                    k_register[i] += ran * cnt
+                
+            # est entropy
+            if total_item_cnt ==0 or total_item_cnt == 1: return None
+            else: 
+                for i in range(self.k_value):
+                    k_register[i] /= total_item_cnt
+                    entropy += math.exp(k_register[i])
+                entropy /= self.k_value
+                entropy = -math.log(entropy)
+                entropy /= math.log(total_item_cnt)
+                return entropy
+        
+        return est_clifford_u1u2DotX2_outputDotX
