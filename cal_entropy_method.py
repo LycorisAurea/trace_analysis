@@ -21,7 +21,12 @@ class CalEntropyMethods():
             est_clifford_u1u2Dot4Power2_outputDot3=self.find_est_clifford_u1u2DotX2_outputDotX(4, 3),
             est_clifford_u1u2Dot4Power2_outputDot2=self.find_est_clifford_u1u2DotX2_outputDotX(4, 2),
             est_clifford_u1u2Dot4Power2_outputDot1=self.find_est_clifford_u1u2DotX2_outputDotX(4, 1),
-            est_clifford_u1u2Dot4Power2_outputDot0=self.find_est_clifford_u1u2DotX2_outputDotX(4, 0)
+            est_clifford_u1u2Dot4Power2_outputDot0=self.find_est_clifford_u1u2DotX2_outputDotX(4, 0), 
+
+            est_origin_16384stage_front=self.find_est_origin_16384_stage('front'),
+            est_origin_16384stage_mid=self.find_est_origin_16384_stage('mid'),
+            est_origin_16384stage_last=self.find_est_origin_16384_stage('last'),
+            est_origin_16384stage_average=self.find_est_origin_16384_stage('average')
         )
 
     def do(self, method):
@@ -470,3 +475,88 @@ class CalEntropyMethods():
                 return entropy
         
         return est_clifford_u1u2DotX2_outputDotX
+
+    def find_est_origin_16384_stage(self, stage_type):
+
+        stage_para = []
+        if stage_type == 'front':
+            stage_para = [
+                1, 584, 4807, 10436, 13879, 15414, 16021, 16250, 16335, 16366, 16378, 16382, 16384
+            ]
+        elif stage_type == 'mid':
+            stage_para = [
+                14, 1228, 6318, 11539, 14402, 15625, 16101, 16280, 16346, 16370, 16379, 16383, 16384
+            ]
+        elif stage_type == 'last':
+            stage_para = [
+                185, 3150, 8933, 13108, 15093, 15897, 16203, 16318, 16360, 16375, 16381, 16383, 16384
+            ]
+        elif stage_type == 'average':
+            stage_para = [
+                104, 2154, 7507, 12230, 14702, 15742, 16144, 16295, 16351, 16372, 16380, 16383, 16384
+            ]
+
+        def est_origin_16384_stage(container):
+            # parameter
+            k_register = [0,] * self.k_value
+            total_item_cnt = 0
+            entropy = 0
+
+            for item, cnt in container.most_common():
+                # total cnt
+                total_item_cnt += cnt
+
+                # give item as seed
+                random.seed(item)
+
+                for i in range(self.k_value):
+                    # skewed stable distribution F(x; 1,−1, π/2, 0), get table head
+                    u1 = random.uniform(0, 1)
+                    u2_real = random.uniform(0, 1)
+
+                    u1 = round(u1*16384); u1 /= 16385
+                    if u1==0: u1=1/16385
+                    u2 = 1/16385
+
+                    w1 = math.pi * (u1-0.5)
+                    w2 = -math.log(u2)
+
+                    ran1 = math.tan(w1) * (math.pi/2 - w1)
+                    ran2 = math.log( w2 * math.cos(w1) / (math.pi/2-w1) )
+                    head = ran1 + ran2
+                    
+                    
+                    # table end
+                    table_end_correction = 0
+                    u2_real = round(u2_real*16384)
+
+                    if   u2_real <= stage_para[0]:  table_end_correction =  0
+                    elif u2_real <= stage_para[1]:  table_end_correction = -1
+                    elif u2_real <= stage_para[2]:  table_end_correction = -2
+                    elif u2_real <= stage_para[3]:  table_end_correction = -3
+                    elif u2_real <= stage_para[4]:  table_end_correction = -4
+                    elif u2_real <= stage_para[5]:  table_end_correction = -5
+                    elif u2_real <= stage_para[6]:  table_end_correction = -6
+                    elif u2_real <= stage_para[7]:  table_end_correction = -7
+                    elif u2_real <= stage_para[8]:  table_end_correction = -8
+                    elif u2_real <= stage_para[9]:  table_end_correction = -9
+                    elif u2_real <= stage_para[10]: table_end_correction = -10
+                    elif u2_real <= stage_para[11]: table_end_correction = -11
+                    elif u2_real <= stage_para[12]: table_end_correction = -12
+
+                    # store k value
+                    ran = head + table_end_correction
+                    k_register[i] += ran * cnt
+                
+            # est entropy
+            if total_item_cnt ==0 or total_item_cnt == 1: return None
+            else: 
+                for i in range(self.k_value):
+                    k_register[i] /= total_item_cnt
+                    entropy += math.exp(k_register[i])
+                entropy /= self.k_value
+                entropy = -math.log(entropy)
+                entropy /= math.log(total_item_cnt)
+                return entropy
+
+        return est_origin_16384_stage
