@@ -262,7 +262,8 @@ class CalEntropyMethods():
         ## est entropy
         h_1 = -j_value.log10()
         h_2_1 = dec.Decimal(1/delta)
-        h_2_2 = dec.Decimal(total_item_cnt).log10()
+        h_2_2_1 = dec.Decimal(total_item_cnt) ** dec.Decimal(alpha)
+        h_2_2 = h_2_2_1.log10()
         h_2 = h_2_1 * h_2_2
         entropy = h_1 - h_2
 
