@@ -9,12 +9,17 @@ This project can analyze network trace files and make statistic data to charts.
 - [Sample Outputs](#Sample-Outputs)
 - [Dependency](#Dependency)
 - [How To Use](#How-To-Use)
-  - [Calculate exact entropy values (One Trace File)](#Calculate-exact-entropy-values-(One-Trace-File))
-  - [Calculate exact entropy values (Several Trace Files)](#Calculate-exact-entropy-values-(Several-Trace-Files))
+  - [Calculate exact entropy values ( One Trace File )](#Calculate-exact-entropy-values-(-One-Network-Trace-File-))
+  - [Calculate exact entropy values ( Several Trace Files )](#Calculate-exact-entropy-values-(-Several-Trace-Files-))
 - [Advanced Features](#Advanced-Features)
   - [Select Output Elements](#Select-Output-Elements)
   - [Speed up the analysis process](#Speed-up-the-analysis-process)
 - [Developer Mode](#Developer-Mode)
+  - [Get The Items of Packet Header of Traces](#Get-The-Items-of-Packet-Header-of-Traces)
+  - [Use Another Method To Calculate Entropy](#Use-Another-Method-To-Calculate-Entropy)
+  - [Import table lists ( 2 methods need )](#Import-table-lists-(-2-methods-need-))
+- [Additional Tools](#Additional-Tools)
+- [Reference](#Reference)
 
 ## Sample Outputs
 
@@ -40,7 +45,7 @@ This project can analyze network trace files and make statistic data to charts.
 
 ## How To Use
 
-### Calculate exact entropy values (One Network Trace File)
+### Calculate exact entropy values ( One Network Trace File )
 
 - Usage :
 
@@ -59,7 +64,7 @@ This project can analyze network trace files and make statistic data to charts.
   python3 analysis.py test.pcap none sec 30
   ```
 
-### Calculate exact entropy values (Several Trace Files)
+### Calculate exact entropy values ( Several Trace Files )
 
 Some large network traces may be seperated to seveal smaller files. Please import functions in `analysis.py` and write a new program.
 
@@ -69,7 +74,7 @@ Some large network traces may be seperated to seveal smaller files. Please impor
 
 ### Select Output Elements
 
-You can select output element by modifying the codes.
+You can select output element by modifying the codes. Defaults are all used.
 
 - Entropy Value  
   You can select the **6 entropy elements** to output : `Source IP`, `Destination IP`, `Source Port`, `Destination Port`, `Packet Length`, `Protocol`.
@@ -90,6 +95,13 @@ You can select output element by modifying the codes.
    'distinct_dport', 'distinct_pkt_len', 'distinct_proto',
    'count_pkt_cnt', 'count_total_pkt_len','count_average_pkt_len']
   )
+  ```
+
+- csv Statistic File  
+  You can get statistic results in `csv` format by the following code.
+
+  ``` Python
+  TracePlot.csv_output()
   ```
 
 ### Speed up the analysis process
@@ -114,12 +126,48 @@ If you need to analyze the same network trace many times, you may hope to speed 
 
 - How To Analyze Trace of csv Format  
   Exactly the same as previous steps. Reffer to :
-  - [Calculate exact entropy values (One Trace File)](#Calculate-exact-entropy-values-(One-Trace-File))
-  - [Calculate exact entropy values (Several Trace Files)](#Calculate-exact-entropy-values-(Several-Trace-Files)) 
+  - [Calculate exact entropy values (One Trace File)](#Calculate-exact-entropy-values-(-One-Network-Trace-File-))
+  - [Calculate exact entropy values (Several Trace Files)](#Calculate-exact-entropy-values-(-Several-Trace-Files-))
 
 ## Developer Mode
 
-### Get Element of Trace
+### Get The Items of Packet Header of Traces
+
+If you need the items of packet header to do another things, you can import the class `PacketAnalysis` in `analysis.py`.  
+There are 2 class in `analysis.py` : `PacketAnalysis` and `TracePlot`. `PacketAnalysis` can parse and collect the information of packet header; `TracePlot` inherits the `PacketAnalysis`, can make charts additionally. So you can use `PacketAnalysis` independently if you don't need the charts. Here are some examples.
+
+- Get entropy and distinct items
+  More methods are in class `PacketAnalysis` in `analysis.py`.
+  
+  ``` Python
+  import analysis
+  mypkt = analysis.PacketAnalysis()
+  mypkt.trace_analysis(input_pcap, time_interval, 'one_trace')
+
+  # get source IP entropy
+  print( mypkt.get_entropy_src_ip() )
+
+  # get the number of distinct item of destination port
+  print( mypkt.get_distinctItem_dport() )
+  ```
+
+- Get Items of Packet Headers
+  You can also take variable directly. The available items are defined in `__init__` method, like `src_ip`, `dst_ip`, etc.
+  
+  ``` Python
+  class PacketAnalysis():
+    def __init__(self, byteorder='big'):
+        # time parameter
+        self.first_time = None
+        self.current_interval = None
+
+        # counter parameter
+        ## entropy item
+        self.src_ip = Counter()
+        self.dst_ip = Counter()
+        self.sport = Counter()
+        self.dport = Counter()
+  ```
 
 ### Use Another Method To Calculate Entropy
 
@@ -165,7 +213,20 @@ It will get the accurate entropy value by using the default parameters. Of cours
 
   3. Following the step "**Use Another Algorithm To Calculate Entropy**" to use your algorithm.
 
-- The table methods (modification version)
+### Import table lists ( 2 methods need )
+
+In ["Use Another Method To Calculate Entropy"](#Use-Another-Method-To-Calculate-Entropy), there 2 algorithm in `analysis.py` need to import table lists additionally : `est_tables` and `est_tables_square`.
+
+- How to use
+
+  Before calling `one_analysis`, adding table list source.
+  
+  ``` Python
+  TracePlot.import_table(Your_Table_List_Path)
+  TracePlot.one_analysis(input_pcap, 'est_tables')
+  ```
+
+## Additional Tools
 
 ## Reference
 
