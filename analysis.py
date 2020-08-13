@@ -950,18 +950,37 @@ if __name__ == '__main__':
         mode = sys.argv[3]
         time_interval = int(sys.argv[4])
     except IndexError:
-        print(
-            'Usage: python3 {0} <trace file>  <attack list(or \'none\')> <mode:sec/min/hour/real> <time interval(sec)>'.format(
-            sys.argv[0]))
-        exit(0)
+        if len(sys.argv) == 4:
+            if mode == 'trans': pass
+            else: 
+                print(
+                    'Usage: python3 {0} <trace file>  <attack list(or \'none\')> <mode:sec/min/hour/real> <time interval(sec)>'.format(
+                    sys.argv[0]))
+                exit(0)
+        else: 
+            print(
+                'Usage: python3 {0} <trace file>  <attack list(or \'none\')> <mode:sec/min/hour/real> <time interval(sec)>'.format(
+                sys.argv[0]))
+            exit(0)
     
-    if os.path.isfile(input_pcap) == False:
+    # check pcap file exists
+    if os.path.isfile(input_pcap) == False: 
         print('Error: Cannot find the file.')
         exit(0)
-    elif time_interval < 1:
+    
+    # flag to transform pcap to csv format
+    if mode == 'trans':
+        output_file = attack_list
+        myplot = TracePlot(1, 'sec')
+        myplot.trans_pcap_to_csv(input_pcap, output_file)
+        exit(0)
+    
+    # check time_interval is correct
+    if time_interval < 1: 
         print('Error: time interval should >= 1 (sec)')
         exit(0)
-    elif mode != 'sec' and mode != 'min' and mode != 'hour' and mode != 'real':
+    # check mode is correct
+    elif mode != 'sec' and mode != 'min' and mode != 'hour' and mode != 'real': 
         print('Error: mode must be \'real\', \'sec\', \'min\', \'hour\'.')
         exit(0)
 
