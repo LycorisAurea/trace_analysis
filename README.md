@@ -141,7 +141,7 @@ If you need to analyze the same network trace many times, you may hope to speed 
 If you need the items of packet header to do another things, you can import the class `PacketAnalysis` in `analysis.py`.  
 There are 2 class in `analysis.py` : `PacketAnalysis` and `TracePlot`. `PacketAnalysis` can parse and collect the information of packet header; `TracePlot` inherits the `PacketAnalysis`, can make charts additionally. So you can use `PacketAnalysis` independently if you don't need the charts. Here are some examples.
 
-- Get Entropy and distinct items
+- Get Entropy and distinct items  
   More methods are in class `PacketAnalysis` in `analysis.py`.
   
   ``` Python
@@ -156,7 +156,7 @@ There are 2 class in `analysis.py` : `PacketAnalysis` and `TracePlot`. `PacketAn
   print( mypkt.get_distinctItem_dport() )
   ```
 
-- Get Items of Packet Headers
+- Get Items of Packet Headers  
   You can also take variable directly. The available items are defined in `__init__` method, like `src_ip`, `dst_ip`, etc.
   
   ``` Python
@@ -178,7 +178,7 @@ There are 2 class in `analysis.py` : `PacketAnalysis` and `TracePlot`. `PacketAn
 
 It will get the accurate Entropy value by using the default parameters. Of course, you can simulate another algorithm of Entropy calculation in this project.
 
-- Use Another Algorithm To Calculate Entropy
+- Use Another Algorithm To Calculate Entropy  
 
   - The following code means to use default method to calculate Entropy value.
 
