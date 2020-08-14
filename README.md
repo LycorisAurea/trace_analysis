@@ -9,8 +9,8 @@ This project can analyze network trace files and make statistic data to charts.
 - [Sample Outputs](#Sample-Outputs)
 - [Dependency](#Dependency)
 - [How To Use](#How-To-Use)
-  - [Calculate exact entropy values ( One Trace File )](#Calculate-exact-entropy-values-(-One-Network-Trace-File-))
-  - [Calculate exact entropy values ( Several Trace Files )](#Calculate-exact-entropy-values-(-Several-Trace-Files-))
+  - [Calculate exact Entropy values ( One Trace File )](#Calculate-exact-Entropy-values-(-One-Network-Trace-File-))
+  - [Calculate exact Entropy values ( Several Trace Files )](#Calculate-exact-Entropy-values-(-Several-Trace-Files-))
 - [Advanced Features](#Advanced-Features)
   - [Select Output Elements](#Select-Output-Elements)
   - [Speed up the analysis process](#Speed-up-the-analysis-process)
@@ -19,6 +19,8 @@ This project can analyze network trace files and make statistic data to charts.
   - [Use Another Method To Calculate Entropy](#Use-Another-Method-To-Calculate-Entropy)
   - [Import table lists ( 2 methods need )](#Import-table-lists-(-2-methods-need-))
 - [Additional Tools](#Additional-Tools)
+  - [Comparison Charts of Entropy Deviation](#Comparison-Charts-of-Entropy-Deviation)
+  - [KL Distance Between Two Results](#KL-Distance-Between-Two-Results)
 - [Reference](#Reference)
 
 ## Sample Outputs
@@ -35,22 +37,24 @@ This project can analyze network trace files and make statistic data to charts.
 ## Dependency
 
 - Linux OS
-- The file `analysis.py` uses python3.5, needs kits: `dpkt` and `plotly`
+- The file `analysis.py` uses python3.5, needs kits: `dpkt` and `plotly`.
+  - dpkt : v1.9.2
+  - plotly : v4.2.1
 
-  ```bash
-  sudo apt install python3-pip
-  pip3 install dpkt
-  pip3 install plotly
+  ``` Bash
+  $ sudo apt install python3-pip
+  $ pip3 install dpkt
+  $ pip3 install plotly
   ```
 
 ## How To Use
 
-### Calculate exact entropy values ( One Network Trace File )
+### Calculate exact Entropy values ( One Network Trace File )
 
 - Usage :
 
-    ```bash
-    python3 analysis.py <network trace file>  <attack list(or none)> <mode:sec/min/hour/real> <time interval(sec)>
+    ``` Bash
+    $ python3 analysis.py <network trace file>  <attack list(or none)> <mode:sec/min/hour/real> <time interval(sec)>
     ```
 
   - `network trace file` : The path of the network trace file you want to analysis.
@@ -60,15 +64,16 @@ This project can analyze network trace files and make statistic data to charts.
 
 - Example
 
-  ```bash
-  python3 analysis.py test.pcap none sec 30
+  ``` Bash
+  $ python3 analysis.py test.pcap none sec 30
   ```
 
-### Calculate exact entropy values ( Several Trace Files )
+### Calculate exact Entropy values ( Several Trace Files )
 
 Some large network traces may be seperated to seveal smaller files. Please import functions in `analysis.py` and write a new program.
 
-- Usage : Refer to `sep_trace_example.py` for details.
+- Usage  
+Refer to `sep_trace_example.py` for details.
 
 ## Advanced Features
 
@@ -77,7 +82,7 @@ Some large network traces may be seperated to seveal smaller files. Please impor
 You can select output element by modifying the codes. Defaults are all used.
 
 - Entropy Value  
-  You can select the **6 entropy elements** to output : `Source IP`, `Destination IP`, `Source Port`, `Destination Port`, `Packet Length`, `Protocol`.
+  You can select the **6 Entropy elements** to output : `Source IP`, `Destination IP`, `Source Port`, `Destination Port`, `Packet Length`, `Protocol`.
 
   ``` Python
   TracePlot.entropy_one_plot(
@@ -110,8 +115,8 @@ If you need to analyze the same network trace many times, you may hope to speed 
 
 - Transform Network Traces To `csv` Format
 
-  ``` bash
-  python3 analysis.py <origin network trace> <name of output file> trans
+  ``` Bash
+  $ python3 analysis.py <origin network trace> <name of output file> trans
   ```
 
   - `origin network trace` : The file of the trace you want to transform.
@@ -120,14 +125,14 @@ If you need to analyze the same network trace many times, you may hope to speed 
 
   For example :
 
-  ``` bash
-  python3 analysis.py test.pcap test.csv trans
+  ``` Bash
+  $ python3 analysis.py test.pcap test.csv trans
   ```
 
 - How To Analyze Trace of csv Format  
   Exactly the same as previous steps. Reffer to :
-  - [Calculate exact entropy values (One Trace File)](#Calculate-exact-entropy-values-(-One-Network-Trace-File-))
-  - [Calculate exact entropy values (Several Trace Files)](#Calculate-exact-entropy-values-(-Several-Trace-Files-))
+  - [Calculate exact Entropy values ( One Trace File )](#Calculate-exact-Entropy-values-(-One-Network-Trace-File-))
+  - [Calculate exact Entropy values ( Several Trace Files )](#Calculate-exact-Entropy-values-(-Several-Trace-Files-))
 
 ## Developer Mode
 
@@ -136,7 +141,7 @@ If you need to analyze the same network trace many times, you may hope to speed 
 If you need the items of packet header to do another things, you can import the class `PacketAnalysis` in `analysis.py`.  
 There are 2 class in `analysis.py` : `PacketAnalysis` and `TracePlot`. `PacketAnalysis` can parse and collect the information of packet header; `TracePlot` inherits the `PacketAnalysis`, can make charts additionally. So you can use `PacketAnalysis` independently if you don't need the charts. Here are some examples.
 
-- Get entropy and distinct items
+- Get Entropy and distinct items
   More methods are in class `PacketAnalysis` in `analysis.py`.
   
   ``` Python
@@ -144,7 +149,7 @@ There are 2 class in `analysis.py` : `PacketAnalysis` and `TracePlot`. `PacketAn
   mypkt = analysis.PacketAnalysis()
   mypkt.trace_analysis(input_pcap, time_interval, 'one_trace')
 
-  # get source IP entropy
+  # get source IP Entropy
   print( mypkt.get_entropy_src_ip() )
 
   # get the number of distinct item of destination port
@@ -171,11 +176,11 @@ There are 2 class in `analysis.py` : `PacketAnalysis` and `TracePlot`. `PacketAn
 
 ### Use Another Method To Calculate Entropy
 
-It will get the accurate entropy value by using the default parameters. Of course, you can simulate another algorithm of entropy calculation in this project.
+It will get the accurate Entropy value by using the default parameters. Of course, you can simulate another algorithm of Entropy calculation in this project.
 
 - Use Another Algorithm To Calculate Entropy
 
-  - The following code means to use default method to calculate entropy value.
+  - The following code means to use default method to calculate Entropy value.
 
     ``` Python
     TracePlot.one_analysis(input_pcap)
@@ -190,7 +195,7 @@ It will get the accurate entropy value by using the default parameters. Of cours
 - Customize Algorithm of Entropy Calculation  
   You can add your algorithm in `cal_entropy_method.py`. Refer to other methods in `cal_entropy_method.py`.
   1. Define a **class method** and program your algorithm  
-    The parameter `container` is a `Conter` structure. It contains items and counts of every item. You can process your data from `container`, and finaaly return an entropy value with `Float` type.
+    The parameter `container` is a `Conter` structure. It contains items and counts of every item. You can process your data from `container`, and finaaly return an Entropy value with `Float` type.
 
       ``` Python
       def calEntropy_pingli(self, container):
@@ -227,6 +232,57 @@ In ["Use Another Method To Calculate Entropy"](#Use-Another-Method-To-Calculate-
   ```
 
 ## Additional Tools
+
+This project provide some tools to compare different Entropy estimation algorithm.
+
+### Comparison Charts of Entropy Deviation
+
+Edit `compare_distplots.py` to generate charts. It will generate 5 documents: Deviation chart x4, Variance file x1.
+
+- Sample Output
+![ ](https://raw.githubusercontent.com/LycorisAurea/trace_analysis/master/show/Example_5_compare_distplots.jpg)
+  - Left Picture : Distribution of Entropy deviation charts.
+  - Right Picture : Cumulative distribution of Entropy deviation charts.
+
+- Usage  
+Refer to `compare_distplots.py` for details.
+
+- Parameters to be modified
+  - `output_file_name` : File name of charts.
+  - `chart_title` : Title of charts.
+  - `exact_dir_path` : Directory of control group.
+  - `est_dir_path` = Directory of experimental group.
+  - `mode` = Display mode of time unit. ( sec / min / hour / real )
+  - `time_interval` = Time interval of calculation.
+  - `pcap` = Name of network traces.
+
+### KL Distance Between Two Results
+
+Edit `compare_KL.py` to calculate **Kullback-Leibler Divergence**. It will generate a `csv` file.
+
+- Sample Output
+![ ](https://raw.githubusercontent.com/LycorisAurea/trace_analysis/master/show/Example_6_KL.jpg)
+
+- Dependency  
+  It needs a kit additionally : `scipy`.
+  - `scipy` : v1.4.1
+  
+  ``` Bash
+  $ pip3 install scipy
+  ```
+
+- Usage
+Refer to `compare_KL.py` for details.
+
+- Parameters to be modified
+  - `exact_dir_path` : Directory of control group.
+  - `est_dir_path` = Directory of experimental group.
+  - `mode` = Display mode of time unit. ( sec / min / hour / real )
+  - `time_interval` = Time interval of calculation.
+  - `pcap` = Name of network traces.
+  - `output_file_name` : `csv` file name of output.
+  - `title` : Packet headers to be analyzed.
+  - `algorithm_name` : Name of the algorithm used by the experimental group.
 
 ## Reference
 
