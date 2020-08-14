@@ -38,8 +38,8 @@ This project can analyze network trace files and make statistic data to charts.
 
 - Linux OS
 - The file `analysis.py` uses python3.5, needs kits: `dpkt` and `plotly`.
-  - dpkt : v1.9.2
-  - plotly : v4.2.1
+  - `dpkt` : v1.9.2
+  - `plotly` : v4.2.1
 
   ``` Bash
   $ sudo apt install python3-pip
@@ -271,7 +271,7 @@ Edit `compare_KL.py` to calculate **Kullback-Leibler Divergence**. It will gener
   $ pip3 install scipy
   ```
 
-- Usage
+- Usage  
 Refer to `compare_KL.py` for details.
 
 - Parameters to be modified
@@ -288,5 +288,6 @@ Refer to `compare_KL.py` for details.
 
 - [dpkt](https://dpkt.readthedocs.io/en/latest/)
 - [plotly](https://plotly.com/python/)
+- [scipy](https://www.scipy.org/)
 - `est_clifford` method : [Sketching Algorithm of Clifford and Cosma](http://proceedings.mlr.press/v31/clifford13a.pdf)
 - `est_pingli` method : [Compressed Counting Algorithm of Ping Li](http://proceedings.mlr.press/v19/li11a.html)
