@@ -25,13 +25,13 @@ This project can analyze network trace files and make statistic data to charts.
 
 ## Sample Outputs
 
-- Entropy Statistics
+- Entropy Statistics  
 ![ ](https://raw.githubusercontent.com/LycorisAurea/trace_analysis/master/show/Example_1_entropy.png)
 
-- Distinct Counts
+- Distinct Counts  
 ![ ](https://raw.githubusercontent.com/LycorisAurea/trace_analysis/master/show/Example_2_count.png)
 
-- CSV File
+- CSV File  
 ![ ](https://raw.githubusercontent.com/LycorisAurea/trace_analysis/master/show/Example_4_csv.png)
 
 ## Dependency
@@ -260,8 +260,8 @@ Refer to `compare_distplots.py` for details.
 
 Edit `compare_KL.py` to calculate **Kullback-Leibler Divergence**. It will generate a `csv` file.
 
-- Sample Output
-![ ](https://raw.githubusercontent.com/LycorisAurea/trace_analysis/master/show/Example_6_KL.jpg)
+- Sample Output  
+  ![ ](https://raw.githubusercontent.com/LycorisAurea/trace_analysis/master/show/Example_6_KL.jpg)
 
 - Dependency  
   It needs a kit additionally : `scipy`.
